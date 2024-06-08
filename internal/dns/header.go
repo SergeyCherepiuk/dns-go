@@ -42,11 +42,11 @@ type Header struct {
 }
 
 // TODO: Not implemented
-func Marshal(header Header) [12]byte {
+func MarshalHeader(header Header) [12]byte {
 	return [12]byte{}
 }
 
 // TODO: Not implemented
-func Unmarshal(bytes [12]byte) (Header, error) {
+func UnmarshalHeader(bytes [12]byte) (Header, error) {
 	return Header{}, nil
 }
