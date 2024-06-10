@@ -1,8 +1,10 @@
 package dns
 
-import "testing"
+import (
+	"testing"
 
-// TODO: Improve error message by creating diff util function
+	"github.com/SergeyCherepiuk/dns-go/internal/utils"
+)
 
 func TestUnmarshalHeaderQueryPacket(t *testing.T) {
 	bytes := [12]byte{
@@ -29,7 +31,8 @@ func TestUnmarshalHeaderQueryPacket(t *testing.T) {
 	actualHeader := UnmarshalHeader(bytes)
 
 	if actualHeader != expectedHeader {
-		t.Fatalf("\nE: %+v\nG: %+v\n", expectedHeader, actualHeader)
+		entries := utils.Diff(actualHeader, expectedHeader)
+		t.Fatal(entries.String())
 	}
 }
 
@@ -58,6 +61,7 @@ func TestUnmarshalHeaderResponsePacket(t *testing.T) {
 	actualHeader := UnmarshalHeader(bytes)
 
 	if actualHeader != expectedHeader {
-		t.Fatalf("\nE: %+v\nG: %+v\n", expectedHeader, actualHeader)
+		entries := utils.Diff(actualHeader, expectedHeader)
+		t.Fatal(entries.String())
 	}
 }
