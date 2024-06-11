@@ -31,47 +31,98 @@ type DiffEntry struct {
 	ExpectedValue any
 }
 
-// TODO: Unit test
 func Diff[T any](actual, expected T) DiffEntries {
-	var (
-		rva  = reflect.ValueOf(actual)
-		rve  = reflect.ValueOf(expected)
-		path = []string{rva.Type().Name()}
-	)
-
-	return diff(rva, rve, path)
+	rt := reflect.TypeOf(actual)
+	rva := reflect.ValueOf(actual)
+	rve := reflect.ValueOf(expected)
+	return diff(rt, rva, rve, []string{}, rt.Name())
 }
 
-func diff(rva, rve reflect.Value, path []string) []DiffEntry {
-	var (
-		rt      = rva.Type()
-		entries = make([]DiffEntry, 0)
-	)
+func diff(rt reflect.Type, rva, rve reflect.Value, path []string, name string) DiffEntries {
+	newPath := copyAppend(path, name)
 
-	for i := range rt.NumField() {
-		var (
-			fa = rva.Field(i)
-			fe = rve.Field(i)
-		)
-
-		if rt.Field(i).Type.Kind() == reflect.Struct {
-			substructPath := copyAppend(path, rt.Field(i).Name)
-			substructEntries := diff(fa, fe, substructPath)
-			entries = append(entries, substructEntries...)
-			continue
-		}
-
-		if !fa.Equal(fe) {
-			fieldPath := copyAppend(path, rt.Field(i).Name)
-			entry := DiffEntry{
-				FieldPath:     strings.Join(fieldPath, "."),
-				ActualValue:   fa,
-				ExpectedValue: fe,
+	switch rt.Kind() {
+	case reflect.Func:
+		return DiffEntries{}
+	case reflect.Slice, reflect.Array:
+		return diffSlice(rt, rva, rve, newPath)
+	case reflect.Map:
+		return diffMap(rt, rva, rve, newPath)
+	case reflect.Struct:
+		return diffStruct(rt, rva, rve, newPath)
+	default:
+		if !rva.Equal(rve) {
+			return DiffEntries{
+				DiffEntry{
+					FieldPath:     strings.Join(newPath, "."),
+					ActualValue:   rva,
+					ExpectedValue: rve,
+				},
 			}
-			entries = append(entries, entry)
 		}
 	}
 
+	return DiffEntries{}
+}
+
+func diffSlice(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntries {
+	lenEntries := diffLen(rva, rve, path)
+	if len(lenEntries) > 0 {
+		return lenEntries
+	}
+
+	entries := make(DiffEntries, 0)
+	for i := range rva.Len() {
+		va := rva.Index(i)
+		ve := rve.Index(i)
+		fieldEntries := diff(va.Type(), va, ve, path, fmt.Sprintf("[%d]", i))
+		entries = append(entries, fieldEntries...)
+	}
+	return entries
+}
+
+func diffMap(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntries {
+	lenEntries := diffLen(rva, rve, path)
+	if len(lenEntries) > 0 {
+		return lenEntries
+	}
+
+	var (
+		keys    = rva.MapKeys()
+		entries = make(DiffEntries, 0)
+	)
+
+	for _, key := range keys {
+		va := rva.MapIndex(key)
+		ve := rve.MapIndex(key)
+		fieldEntries := diff(va.Type(), va, ve, path, fmt.Sprintf("[%v]", key))
+		entries = append(entries, fieldEntries...)
+	}
+	return entries
+}
+
+func diffLen(rva, rve reflect.Value, path []string) DiffEntries {
+	if rva.Len() != rve.Len() {
+		lenPath := copyAppend(path, "len")
+		return DiffEntries{
+			DiffEntry{
+				FieldPath:     strings.Join(lenPath, "."),
+				ActualValue:   rva.Len(),
+				ExpectedValue: rve.Len(),
+			},
+		}
+	}
+	return DiffEntries{}
+}
+
+func diffStruct(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntries {
+	entries := make(DiffEntries, 0)
+	for i := range rva.Type().NumField() {
+		fa := rva.Field(i)
+		fe := rve.Field(i)
+		fieldEntries := diff(rt.Field(i).Type, fa, fe, path, rt.Field(i).Name)
+		entries = append(entries, fieldEntries...)
+	}
 	return entries
 }
 
