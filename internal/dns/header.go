@@ -45,9 +45,35 @@ type Header struct {
 	AdditionalRecordsSectionSize uint16
 }
 
-// TODO: Not implemented
 func MarshalHeader(header Header) [12]byte {
-	return [12]byte{}
+	var (
+		idBits                           = utils.Uint16ToBytes(header.ID)
+		questionSectionSizeBits          = utils.Uint16ToBytes(header.QuestionSectionSize)
+		answerSectionSizeBits            = utils.Uint16ToBytes(header.AnswerSectionSize)
+		authorityRecordsSectionSizeBits  = utils.Uint16ToBytes(header.AuthorityRecordsSectionSize)
+		additionalRecordsSectionSizeBits = utils.Uint16ToBytes(header.AdditionalRecordsSectionSize)
+
+		packetTypeBit          = uint16(header.PacketType) << 15
+		opcodeBits             = uint16(header.Opcode) << 11
+		authoritativeAnswerBit = uint16(utils.BoolToUint8(header.AuthoritativeAnswer)) << 10
+		truncatedBit           = uint16(utils.BoolToUint8(header.Truncated)) << 9
+		recursionDesiredBit    = uint16(utils.BoolToUint8(header.RecursionDesired)) << 8
+		recursionAvailableBit  = uint16(utils.BoolToUint8(header.RecursionAvailable)) << 7
+		responseCodeBits       = uint16(header.ResponseCode)
+
+		secondRow = packetTypeBit | opcodeBits | authoritativeAnswerBit | truncatedBit |
+			recursionDesiredBit | recursionAvailableBit | responseCodeBits
+		secondRowBits = utils.Uint16ToBytes(secondRow)
+	)
+
+	return [12]byte{
+		idBits[0], idBits[1],
+		secondRowBits[0], secondRowBits[1],
+		questionSectionSizeBits[0], questionSectionSizeBits[1],
+		answerSectionSizeBits[0], answerSectionSizeBits[1],
+		authorityRecordsSectionSizeBits[0], authorityRecordsSectionSizeBits[1],
+		additionalRecordsSectionSizeBits[0], additionalRecordsSectionSizeBits[1],
+	}
 }
 
 func UnmarshalHeader(bytes [12]byte) Header {
