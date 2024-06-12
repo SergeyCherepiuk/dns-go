@@ -15,6 +15,8 @@ func TestMarshalHeaderQueryPacket(t *testing.T) {
 		Truncated:                    false,
 		RecursionDesired:             true,
 		RecursionAvailable:           false,
+		AuthenticData:                true,
+		CheckingDisabled:             false,
 		ResponseCode:                 ResponseCodeNoError,
 		QuestionSectionSize:          1,
 		AnswerSectionSize:            0,
@@ -23,7 +25,7 @@ func TestMarshalHeaderQueryPacket(t *testing.T) {
 	}
 
 	expectedBytes := [12]byte{
-		0x4e, 0xdb, 0x01, 0x00,
+		0x4e, 0xdb, 0x01, 0x20,
 		0x00, 0x01, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00,
 	}
@@ -68,7 +70,7 @@ func TestMarshalHeaderResponsePacket(t *testing.T) {
 
 func TestUnmarshalHeaderQueryPacket(t *testing.T) {
 	bytes := [12]byte{
-		0x4e, 0xdb, 0x01, 0x00,
+		0x4e, 0xdb, 0x01, 0x20,
 		0x00, 0x01, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00,
 	}
@@ -81,6 +83,8 @@ func TestUnmarshalHeaderQueryPacket(t *testing.T) {
 		Truncated:                    false,
 		RecursionDesired:             true,
 		RecursionAvailable:           false,
+		AuthenticData:                true,
+		CheckingDisabled:             false,
 		ResponseCode:                 ResponseCodeNoError,
 		QuestionSectionSize:          1,
 		AnswerSectionSize:            0,
