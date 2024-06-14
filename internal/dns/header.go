@@ -4,6 +4,8 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
+const HeaderSize = 12
+
 type PacketType uint8
 
 const (
@@ -47,7 +49,7 @@ type Header struct {
 	AdditionalRecordsSectionSize uint16
 }
 
-func MarshalHeader(header Header) [12]byte {
+func MarshalHeader(header Header) [HeaderSize]byte {
 	var (
 		packetTypeBit          = uint16(header.PacketType) << 15
 		opcodeBits             = uint16(header.Opcode) << 11
@@ -72,7 +74,7 @@ func MarshalHeader(header Header) [12]byte {
 		additionalRecordsSectionSizeBits = utils.Uint16ToBytes(header.AdditionalRecordsSectionSize)
 	)
 
-	return [12]byte{
+	return [HeaderSize]byte{
 		idBits[0], idBits[1],
 		flagsBits[0], flagsBits[1],
 		questionSectionSizeBits[0], questionSectionSizeBits[1],
@@ -82,7 +84,7 @@ func MarshalHeader(header Header) [12]byte {
 	}
 }
 
-func UnmarshalHeader(bytes [12]byte) Header {
+func UnmarshalHeader(bytes [HeaderSize]byte) Header {
 	var (
 		packetTypeBit          = (bytes[2] >> 7) & 0b00000001
 		opcodeBits             = (bytes[2] >> 3) & 0b00001111

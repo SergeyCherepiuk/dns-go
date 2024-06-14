@@ -24,7 +24,7 @@ func TestMarshalHeaderQueryPacket(t *testing.T) {
 		AdditionalRecordsSectionSize: 0,
 	}
 
-	expectedBytes := [12]byte{
+	expectedBytes := [HeaderSize]byte{
 		0x4e, 0xdb, 0x01, 0x20,
 		0x00, 0x01, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00,
@@ -54,7 +54,7 @@ func TestMarshalHeaderResponsePacket(t *testing.T) {
 		AdditionalRecordsSectionSize: 0,
 	}
 
-	expectedBytes := [12]byte{
+	expectedBytes := [HeaderSize]byte{
 		0x4e, 0xdb, 0x81, 0x80,
 		0x00, 0x01, 0x00, 0x01,
 		0x00, 0x00, 0x00, 0x00,
@@ -69,7 +69,7 @@ func TestMarshalHeaderResponsePacket(t *testing.T) {
 }
 
 func TestUnmarshalHeaderQueryPacket(t *testing.T) {
-	bytes := [12]byte{
+	bytes := [HeaderSize]byte{
 		0x4e, 0xdb, 0x01, 0x20,
 		0x00, 0x01, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00,
@@ -101,7 +101,7 @@ func TestUnmarshalHeaderQueryPacket(t *testing.T) {
 }
 
 func TestUnmarshalHeaderResponsePacket(t *testing.T) {
-	bytes := [12]byte{
+	bytes := [HeaderSize]byte{
 		0x4e, 0xdb, 0x81, 0x80,
 		0x00, 0x01, 0x00, 0x01,
 		0x00, 0x00, 0x00, 0x00,
