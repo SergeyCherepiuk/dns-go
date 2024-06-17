@@ -2,8 +2,6 @@ package dns
 
 import (
 	"strings"
-
-	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
 type QueryPacket struct {
@@ -40,21 +38,26 @@ func UnmarshalQueryPacket(bytes []byte) QueryPacket {
 	return queryPacket
 }
 
+// TODO (low priority): Optimize caching. Lookup table can potentially grow big.
 func cacheDomain(domain string, offset int, lookup map[int]string) {
 	subdomains := strings.Split(domain, ".")
 
 	for i := len(subdomains) - 1; i >= 0; i-- {
 		subdomain := strings.Join(subdomains[i:], ".")
-		if !utils.MapContainsValue(lookup, subdomain) {
-			var (
-				subdomainsBefore       = subdomains[:i]
-				delimiters             = len(subdomainsBefore)
-				subdomainsBeforeLength = lenSum(subdomainsBefore)
-				bytesBefore            = subdomainsBeforeLength + delimiters
-				startByte              = offset + bytesBefore
-			)
-			lookup[startByte] = subdomain
+
+		if subdomain == "" {
+			continue
 		}
+
+		var (
+			subdomainsBefore       = subdomains[:i]
+			delimiters             = len(subdomainsBefore)
+			subdomainsBeforeLength = lenSum(subdomainsBefore)
+			bytesBefore            = subdomainsBeforeLength + delimiters
+			startByte              = offset + bytesBefore
+		)
+
+		lookup[startByte] = subdomain
 	}
 }
 
