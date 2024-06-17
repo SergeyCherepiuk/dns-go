@@ -6,13 +6,13 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
-func MarshalDomain(domain string, lookup map[string]int) []byte {
+func MarshalDomain(domain string, lookup map[int]string) []byte {
 	var bytes []byte
 
 	subdomains := strings.Split(domain, ".")
 	for i, subdomain := range subdomains {
 		fullDomain := strings.Join(subdomains[i:], ".")
-		index, ok := lookup[fullDomain]
+		index, ok := utils.KeyByValue(lookup, fullDomain)
 
 		if ok {
 			pointer := 0b11000000_00000000 | uint16(index)

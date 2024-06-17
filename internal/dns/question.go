@@ -47,7 +47,7 @@ type Question struct {
 	Class  QuestionClass
 }
 
-func MarshalQuestion(question Question, lookup map[string]int) []byte {
+func MarshalQuestion(question Question, lookup map[int]string) []byte {
 	var bytes []byte
 
 	domainBytes := MarshalDomain(question.Domain, lookup)

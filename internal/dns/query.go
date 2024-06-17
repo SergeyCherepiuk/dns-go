@@ -2,6 +2,8 @@ package dns
 
 import (
 	"strings"
+
+	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
 type QueryPacket struct {
@@ -9,7 +11,28 @@ type QueryPacket struct {
 	Questions []Question
 }
 
-// TODO: Implement "MarshalQueryPacket"
+func MarshalQueryPacket(packet QueryPacket) []byte {
+	var (
+		bytes        []byte
+		bytesWritten int
+	)
+
+	headerBytes := MarshalHeader(packet.Header)
+	bytes = append(bytes, headerBytes[:]...)
+	bytesWritten += HeaderSize
+
+	lookup := make(map[int]string, 0)
+	for _, question := range packet.Questions {
+		questionBytes := MarshalQuestion(question, lookup)
+		bytes = append(bytes, questionBytes...)
+
+		cacheDomain(question.Domain, bytesWritten, lookup)
+
+		bytesWritten += len(questionBytes)
+	}
+
+	return bytes
+}
 
 func UnmarshalQueryPacket(bytes []byte) QueryPacket {
 	bytesRead := 0
@@ -56,6 +79,13 @@ func cacheDomain(domain string, offset int, lookup map[int]string) {
 			bytesBefore            = subdomainsBeforeLength + delimiters
 			startByte              = offset + bytesBefore
 		)
+
+		_, ok := utils.KeyByValue(lookup, subdomain)
+
+		if ok {
+			lookup[startByte] = subdomain
+			return
+		}
 
 		lookup[startByte] = subdomain
 	}

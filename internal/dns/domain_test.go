@@ -10,7 +10,7 @@ import (
 func TestMarshalDomainEmptyLookup(t *testing.T) {
 	var (
 		domain = "google.com."
-		lookup = map[string]int{}
+		lookup = map[int]string{}
 	)
 
 	expectedBytes := []byte{
@@ -29,7 +29,7 @@ func TestMarshalDomainEmptyLookup(t *testing.T) {
 func TestMarshalDomainExactDomainInLookup(t *testing.T) {
 	var (
 		domain = "google.com."
-		lookup = map[string]int{"google.com.": 12}
+		lookup = map[int]string{12: "google.com."}
 	)
 
 	expectedBytes := []byte{
@@ -47,7 +47,7 @@ func TestMarshalDomainExactDomainInLookup(t *testing.T) {
 func TestMarshalDomainPartOfDomainInLookup(t *testing.T) {
 	var (
 		domain = "mx.google.com."
-		lookup = map[string]int{"google.com.": 12}
+		lookup = map[int]string{12: "google.com."}
 	)
 
 	expectedBytes := []byte{

@@ -1,10 +1,12 @@
 package utils
 
-func MapContainsValue[K, V comparable](table map[K]V, target V) bool {
-	for _, value := range table {
+func KeyByValue[K, V comparable](table map[K]V, target V) (K, bool) {
+	for key, value := range table {
 		if value == target {
-			return true
+			return key, true
 		}
 	}
-	return false
+
+	var zero K
+	return zero, false
 }

@@ -49,7 +49,7 @@ func TestMarshalQuestionEmptyLookup(t *testing.T) {
 			Type:   QuestionTypeA,
 			Class:  QuestionClassIN,
 		}
-		lookup = map[string]int{}
+		lookup = map[int]string{}
 	)
 
 	expectedBytes := []byte{
@@ -72,7 +72,7 @@ func TestMarshalQuestionExactDomainInLookup(t *testing.T) {
 			Type:   QuestionTypeA,
 			Class:  QuestionClassIN,
 		}
-		lookup = map[string]int{"google.com.": 12}
+		lookup = map[int]string{12: "google.com."}
 	)
 
 	expectedBytes := []byte{
@@ -94,7 +94,7 @@ func TestMarshalQuestionPartOfDomainInLookup(t *testing.T) {
 			Type:   QuestionTypeMX,
 			Class:  QuestionClassIN,
 		}
-		lookup = map[string]int{"google.com.": 12}
+		lookup = map[int]string{12: "google.com."}
 	)
 
 	expectedBytes := []byte{
