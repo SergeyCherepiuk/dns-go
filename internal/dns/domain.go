@@ -1,8 +1,36 @@
 package dns
 
-import "github.com/SergeyCherepiuk/dns-go/internal/utils"
+import (
+	"strings"
 
-// TODO: Implement "MarshalDomain"
+	"github.com/SergeyCherepiuk/dns-go/internal/utils"
+)
+
+func MarshalDomain(domain string, lookup map[string]int) []byte {
+	var bytes []byte
+
+	subdomains := strings.Split(domain, ".")
+	for i, subdomain := range subdomains {
+		fullDomain := strings.Join(subdomains[i:], ".")
+		index, ok := lookup[fullDomain]
+
+		if ok {
+			pointer := 0b11000000_00000000 | uint16(index)
+			pointerBytes := utils.Uint16ToBytes(pointer)
+
+			bytes = append(bytes, pointerBytes[:]...)
+			bytes = append(bytes, 0x00)
+
+			break
+		}
+
+		size := byte(len(subdomain))
+		bytes = append(bytes, size)
+		bytes = append(bytes, subdomain...)
+	}
+
+	return bytes
+}
 
 func UnmarshalDomain(bytes []byte, lookup map[int]string) (string, int) {
 	var (

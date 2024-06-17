@@ -47,6 +47,8 @@ type Question struct {
 	Class  QuestionClass
 }
 
+// TODO: Implement "MarshalQuestion"
+
 func UnmarshalQuestion(bytes []byte, lookup map[int]string) (Question, int) {
 	domain, bytesRead := UnmarshalDomain(bytes, lookup)
 
