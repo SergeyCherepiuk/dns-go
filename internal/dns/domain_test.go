@@ -1,7 +1,7 @@
 package dns
 
 import (
-	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
@@ -20,7 +20,7 @@ func TestMarshalDomainEmptyLookup(t *testing.T) {
 
 	actualBytes := MarshalDomain(domain, lookup)
 
-	if !reflect.DeepEqual(actualBytes, expectedBytes) {
+	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
 		t.Fatal(entries.String())
 	}
@@ -38,7 +38,7 @@ func TestMarshalDomainExactDomainInLookup(t *testing.T) {
 
 	actualBytes := MarshalDomain(domain, lookup)
 
-	if !reflect.DeepEqual(actualBytes, expectedBytes) {
+	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
 		t.Fatal(entries.String())
 	}
@@ -56,7 +56,7 @@ func TestMarshalDomainPartOfDomainInLookup(t *testing.T) {
 
 	actualBytes := MarshalDomain(domain, lookup)
 
-	if !reflect.DeepEqual(actualBytes, expectedBytes) {
+	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
 		t.Fatal(entries.String())
 	}

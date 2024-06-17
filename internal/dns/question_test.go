@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
@@ -37,6 +38,74 @@ func TestQuestionConstants(t *testing.T) {
 	entries = append(entries, utils.Diff(QuestionClassALL, 255)...)
 
 	if len(entries) > 0 {
+		t.Fatal(entries.String())
+	}
+}
+
+func TestMarshalQuestionEmptyLookup(t *testing.T) {
+	var (
+		question = Question{
+			Domain: "google.com.",
+			Type:   QuestionTypeA,
+			Class:  QuestionClassIN,
+		}
+		lookup = map[string]int{}
+	)
+
+	expectedBytes := []byte{
+		0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03,
+		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
+	}
+
+	actualBytes := MarshalQuestion(question, lookup)
+
+	if !slices.Equal(actualBytes, expectedBytes) {
+		entries := utils.Diff(actualBytes, expectedBytes)
+		t.Fatal(entries.String())
+	}
+}
+
+func TestMarshalQuestionExactDomainInLookup(t *testing.T) {
+	var (
+		question = Question{
+			Domain: "google.com.",
+			Type:   QuestionTypeA,
+			Class:  QuestionClassIN,
+		}
+		lookup = map[string]int{"google.com.": 12}
+	)
+
+	expectedBytes := []byte{
+		0xc0, 0x0c, 0x00, 0x00, 0x01, 0x00, 0x01,
+	}
+
+	actualBytes := MarshalQuestion(question, lookup)
+
+	if !slices.Equal(actualBytes, expectedBytes) {
+		entries := utils.Diff(actualBytes, expectedBytes)
+		t.Fatal(entries.String())
+	}
+}
+
+func TestMarshalQuestionPartOfDomainInLookup(t *testing.T) {
+	var (
+		question = Question{
+			Domain: "mx.google.com.",
+			Type:   QuestionTypeMX,
+			Class:  QuestionClassIN,
+		}
+		lookup = map[string]int{"google.com.": 12}
+	)
+
+	expectedBytes := []byte{
+		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
+		0x00, 0x01,
+	}
+
+	actualBytes := MarshalQuestion(question, lookup)
+
+	if !slices.Equal(actualBytes, expectedBytes) {
+		entries := utils.Diff(actualBytes, expectedBytes)
 		t.Fatal(entries.String())
 	}
 }
