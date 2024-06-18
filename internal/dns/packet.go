@@ -70,7 +70,7 @@ func UnmarshalPacket(bytes []byte) Packet {
 func cacheDomain(domain string, offset int, lookup map[int]string) {
 	subdomains := strings.Split(domain, ".")
 
-	for i := len(subdomains) - 1; i >= 0; i-- {
+	for i := 0; i < len(subdomains); i++ {
 		subdomain := strings.Join(subdomains[i:], ".")
 
 		if subdomain == "" {
