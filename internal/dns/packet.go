@@ -6,12 +6,13 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
-type QueryPacket struct {
+type Packet struct {
 	Header    Header
 	Questions []Question
+	// TODO: Add "Answers" field of type []Answer
 }
 
-func MarshalQueryPacket(packet QueryPacket) []byte {
+func MarshalPacket(packet Packet) []byte {
 	var (
 		bytes        []byte
 		bytesWritten int
@@ -31,10 +32,12 @@ func MarshalQueryPacket(packet QueryPacket) []byte {
 		bytesWritten += len(questionBytes)
 	}
 
+	// TODO: Marshal answers
+
 	return bytes
 }
 
-func UnmarshalQueryPacket(bytes []byte) QueryPacket {
+func UnmarshalPacket(bytes []byte) Packet {
 	bytesRead := 0
 
 	var (
@@ -43,7 +46,7 @@ func UnmarshalQueryPacket(bytes []byte) QueryPacket {
 	)
 	bytesRead += HeaderSize
 
-	queryPacket := QueryPacket{
+	packet := Packet{
 		Header:    header,
 		Questions: make([]Question, header.QuestionSectionSize),
 	}
@@ -52,13 +55,15 @@ func UnmarshalQueryPacket(bytes []byte) QueryPacket {
 	for i := range header.QuestionSectionSize {
 		question, n := UnmarshalQuestion(bytes[bytesRead:], lookup)
 
-		queryPacket.Questions[i] = question
+		packet.Questions[i] = question
 		cacheDomain(question.Domain, bytesRead, lookup)
 
 		bytesRead += n
 	}
 
-	return queryPacket
+	// TODO: Unmarshal answers
+
+	return packet
 }
 
 // TODO (low priority): Optimize caching. Lookup table can potentially grow big.

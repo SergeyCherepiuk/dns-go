@@ -8,8 +8,8 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
-func TestMarshalQueryPacketOneQuestion(t *testing.T) {
-	packet := QueryPacket{
+func TestMarshalPacketOneQuestion(t *testing.T) {
+	packet := Packet{
 		Header: Header{
 			ID:                           0x1234,
 			PacketType:                   PacketTypeQuery,
@@ -41,7 +41,7 @@ func TestMarshalQueryPacketOneQuestion(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	actualBytes := MarshalQueryPacket(packet)
+	actualBytes := MarshalPacket(packet)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -50,7 +50,7 @@ func TestMarshalQueryPacketOneQuestion(t *testing.T) {
 }
 
 func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
-	packet := QueryPacket{
+	packet := Packet{
 		Header: Header{
 			ID:                           0x1234,
 			PacketType:                   PacketTypeQuery,
@@ -87,7 +87,7 @@ func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
 		0x00, 0x01,
 	}
 
-	actualBytes := MarshalQueryPacket(packet)
+	actualBytes := MarshalPacket(packet)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -96,7 +96,7 @@ func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
 }
 
 func TestMarshalQueryPacketThreeQuestions(t *testing.T) {
-	packet := QueryPacket{
+	packet := Packet{
 		Header: Header{
 			ID:                           0x1234,
 			PacketType:                   PacketTypeQuery,
@@ -137,7 +137,7 @@ func TestMarshalQueryPacketThreeQuestions(t *testing.T) {
 		0xc0, 0x13, 0x00, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	actualBytes := MarshalQueryPacket(packet)
+	actualBytes := MarshalPacket(packet)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -156,7 +156,7 @@ func TestUnmarshalQueryPacketOneQuestion(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	expectedQueryPackcet := QueryPacket{
+	expectedPackcet := Packet{
 		Header: Header{
 			ID:                           0x1234,
 			PacketType:                   PacketTypeQuery,
@@ -178,10 +178,10 @@ func TestUnmarshalQueryPacketOneQuestion(t *testing.T) {
 		},
 	}
 
-	actualQueryPacket := UnmarshalQueryPacket(bytes)
+	actualPacket := UnmarshalPacket(bytes)
 
-	if !reflect.DeepEqual(actualQueryPacket, expectedQueryPackcet) {
-		entries := utils.Diff(actualQueryPacket, expectedQueryPackcet)
+	if !reflect.DeepEqual(actualPacket, expectedPackcet) {
+		entries := utils.Diff(actualPacket, expectedPackcet)
 		t.Fatal(entries.String())
 	}
 }
@@ -201,7 +201,7 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 		0x00, 0x01,
 	}
 
-	expectedQueryPackcet := QueryPacket{
+	expectedPackcet := Packet{
 		Header: Header{
 			ID:                           0x1234,
 			PacketType:                   PacketTypeQuery,
@@ -224,10 +224,10 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 		},
 	}
 
-	actualQueryPacket := UnmarshalQueryPacket(bytes)
+	actualPacket := UnmarshalPacket(bytes)
 
-	if !reflect.DeepEqual(actualQueryPacket, expectedQueryPackcet) {
-		entries := utils.Diff(actualQueryPacket, expectedQueryPackcet)
+	if !reflect.DeepEqual(actualPacket, expectedPackcet) {
+		entries := utils.Diff(actualPacket, expectedPackcet)
 		t.Fatal(entries.String())
 	}
 }
@@ -250,7 +250,7 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 		0xc0, 0x13, 0x00, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	expectedQueryPackcet := QueryPacket{
+	expectedPackcet := Packet{
 		Header: Header{
 			ID:                           0x1234,
 			PacketType:                   PacketTypeQuery,
@@ -274,10 +274,10 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 		},
 	}
 
-	actualQueryPacket := UnmarshalQueryPacket(bytes)
+	actualPacket := UnmarshalPacket(bytes)
 
-	if !reflect.DeepEqual(actualQueryPacket, expectedQueryPackcet) {
-		entries := utils.Diff(actualQueryPacket, expectedQueryPackcet)
+	if !reflect.DeepEqual(actualPacket, expectedPackcet) {
+		entries := utils.Diff(actualPacket, expectedPackcet)
 		t.Fatal(entries.String())
 	}
 }
