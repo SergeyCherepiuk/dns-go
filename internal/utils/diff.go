@@ -45,9 +45,9 @@ func diff(rt reflect.Type, rva, rve reflect.Value, path []string, name string) D
 	case reflect.Func:
 		return DiffEntries{}
 	case reflect.Slice, reflect.Array:
-		return diffSlice(rt, rva, rve, newPath)
+		return diffSlice(rva, rve, newPath)
 	case reflect.Map:
-		return diffMap(rt, rva, rve, newPath)
+		return diffMap(rva, rve, newPath)
 	case reflect.Struct:
 		return diffStruct(rt, rva, rve, newPath)
 	default:
@@ -65,7 +65,7 @@ func diff(rt reflect.Type, rva, rve reflect.Value, path []string, name string) D
 	return DiffEntries{}
 }
 
-func diffSlice(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntries {
+func diffSlice(rva, rve reflect.Value, path []string) DiffEntries {
 	lenEntries := diffLen(rva, rve, path)
 	if len(lenEntries) > 0 {
 		return lenEntries
@@ -81,7 +81,7 @@ func diffSlice(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntri
 	return entries
 }
 
-func diffMap(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntries {
+func diffMap(rva, rve reflect.Value, path []string) DiffEntries {
 	lenEntries := diffLen(rva, rve, path)
 	if len(lenEntries) > 0 {
 		return lenEntries
