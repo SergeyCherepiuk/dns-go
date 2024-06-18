@@ -7,24 +7,24 @@ import (
 type QuestionType uint16
 
 const (
-	_ = QuestionType(iota)
-	QuestionTypeA
-	QuestionTypeNS
-	QuestionTypeMD
-	QuestionTypeMF
-	QuestionTypeCNAME
-	QuestionTypeSOA
-	QuestionTypeMB
-	QuestionTypeMG
-	QuestionTypeMR
-	QuestionTypeNULL
-	QuestionTypeWKS
-	QuestionTypePTR
-	QuestionTypeHINFO
-	QuestionTypeMINFO
-	QuestionTypeMX
-	QuestionTypeTXT
-	QuestionTypeAXFR = QuestionType(iota + 235)
+	QuestionTypeA     = QuestionType(RecordTypeA)
+	QuestionTypeNS    = QuestionType(RecordTypeNS)
+	QuestionTypeMD    = QuestionType(RecordTypeMD)
+	QuestionTypeMF    = QuestionType(RecordTypeMF)
+	QuestionTypeCNAME = QuestionType(RecordTypeCNAME)
+	QuestionTypeSOA   = QuestionType(RecordTypeSOA)
+	QuestionTypeMB    = QuestionType(RecordTypeMB)
+	QuestionTypeMG    = QuestionType(RecordTypeMG)
+	QuestionTypeMR    = QuestionType(RecordTypeMR)
+	QuestionTypeNULL  = QuestionType(RecordTypeNULL)
+	QuestionTypeWKS   = QuestionType(RecordTypeWKS)
+	QuestionTypePTR   = QuestionType(RecordTypePTR)
+	QuestionTypeHINFO = QuestionType(RecordTypeHINFO)
+	QuestionTypeMINFO = QuestionType(RecordTypeMINFO)
+	QuestionTypeMX    = QuestionType(RecordTypeMX)
+	QuestionTypeTXT   = QuestionType(RecordTypeTXT)
+
+	QuestionTypeAXFR = QuestionType(iota + 236)
 	QuestionTypeMAILB
 	QuestionTypeMAILA
 	QuestionTypeALL
@@ -33,12 +33,12 @@ const (
 type QuestionClass uint16
 
 const (
-	_ = QuestionClass(iota)
-	QuestionClassIN
-	QuestionClassCS
-	QuestionClassCH
-	QuestionClassHS
-	QuestionClassALL = QuestionClass(iota + 250)
+	QuestionClassIN = QuestionClass(RecordClassIN)
+	QuestionClassCS = QuestionClass(RecordClassCS)
+	QuestionClassCH = QuestionClass(RecordClassCH)
+	QuestionClassHS = QuestionClass(RecordClassHS)
+
+	QuestionClassALL = QuestionClass(iota + 251)
 )
 
 type Question struct {
@@ -53,11 +53,11 @@ func MarshalQuestion(question Question, lookup map[int]string) []byte {
 	domainBytes := MarshalDomain(question.Domain, lookup)
 	bytes = append(bytes, domainBytes...)
 
-	questionTypeBytes := utils.Uint16ToBytes(uint16(question.Type))
-	bytes = append(bytes, questionTypeBytes[:]...)
+	typeBytes := utils.Uint16ToBytes(uint16(question.Type))
+	bytes = append(bytes, typeBytes[:]...)
 
-	questionClassBytes := utils.Uint16ToBytes(uint16(question.Class))
-	bytes = append(bytes, questionClassBytes[:]...)
+	classBytes := utils.Uint16ToBytes(uint16(question.Class))
+	bytes = append(bytes, classBytes[:]...)
 
 	return bytes
 }
@@ -65,16 +65,16 @@ func MarshalQuestion(question Question, lookup map[int]string) []byte {
 func UnmarshalQuestion(bytes []byte, lookup map[int]string) (Question, int) {
 	domain, bytesRead := UnmarshalDomain(bytes, lookup)
 
-	questionTypeBytes := [2]byte{bytes[bytesRead], bytes[bytesRead+1]}
+	typeBytes := [2]byte(bytes[bytesRead : bytesRead+2])
 	bytesRead += 2
 
-	questionClassBytes := [2]byte{bytes[bytesRead], bytes[bytesRead+1]}
+	classBytes := [2]byte(bytes[bytesRead : bytesRead+2])
 	bytesRead += 2
 
 	question := Question{
 		Domain: domain,
-		Type:   QuestionType(utils.BytesToUint16(questionTypeBytes)),
-		Class:  QuestionClass(utils.BytesToUint16(questionClassBytes)),
+		Type:   QuestionType(utils.BytesToUint16(typeBytes)),
+		Class:  QuestionClass(utils.BytesToUint16(classBytes)),
 	}
 
 	return question, bytesRead
