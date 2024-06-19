@@ -76,7 +76,7 @@ func TestMarshalQuestionExactDomainInLookup(t *testing.T) {
 	)
 
 	expectedBytes := []byte{
-		0xc0, 0x0c, 0x00, 0x00, 0x01, 0x00, 0x01,
+		0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01,
 	}
 
 	actualBytes := MarshalQuestion(question, lookup)
@@ -98,8 +98,8 @@ func TestMarshalQuestionPartOfDomainInLookup(t *testing.T) {
 	)
 
 	expectedBytes := []byte{
-		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
-		0x00, 0x01,
+		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f, 0x00,
+		0x01,
 	}
 
 	actualBytes := MarshalQuestion(question, lookup)
@@ -144,7 +144,7 @@ func TestUnmarshalQuestionEmptyLookup(t *testing.T) {
 func TestUnmarshalQuestionExactDomainInLookup(t *testing.T) {
 	var (
 		bytes = []byte{
-			0xc0, 0x0c, 0x00, 0x00, 0x01, 0x00, 0x01,
+			0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01,
 		}
 		lookup = map[int]string{12: "google.com."}
 	)
@@ -155,7 +155,7 @@ func TestUnmarshalQuestionExactDomainInLookup(t *testing.T) {
 			Type:   QuestionTypeA,
 			Class:  QuestionClassIN,
 		}
-		expectedBytesRead = 7
+		expectedBytesRead = 6
 	)
 
 	actualQuestion, actualBytesRead := UnmarshalQuestion(bytes, lookup)
@@ -174,7 +174,7 @@ func TestUnmarshalQuestionExactDomainInLookup(t *testing.T) {
 func TestUnmarshalQuestionPartOfDomainInLookup(t *testing.T) {
 	var (
 		bytes = []byte{
-			0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
+			0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f,
 			0x00, 0x01,
 		}
 		lookup = map[int]string{12: "google.com."}
@@ -186,7 +186,7 @@ func TestUnmarshalQuestionPartOfDomainInLookup(t *testing.T) {
 			Type:   QuestionTypeMX,
 			Class:  QuestionClassIN,
 		}
-		expectedBytesRead = 10
+		expectedBytesRead = 9
 	)
 
 	actualQuestion, actualBytesRead := UnmarshalQuestion(bytes, lookup)

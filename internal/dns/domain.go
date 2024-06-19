@@ -17,10 +17,7 @@ func MarshalDomain(domain string, lookup map[int]string) []byte {
 		if ok {
 			pointer := 0b11000000_00000000 | uint16(index)
 			pointerBytes := utils.Uint16ToBytes(pointer)
-
 			bytes = append(bytes, pointerBytes[:]...)
-			bytes = append(bytes, 0x00)
-
 			break
 		}
 
@@ -54,7 +51,7 @@ func UnmarshalDomain(bytes []byte, lookup map[int]string) (string, int) {
 			lookedupDomain := []byte(lookup[int(pointer)])
 			domain = append(domain, lookedupDomain...)
 
-			continue
+			break
 		}
 
 		domain = append(domain, bytes[bytesRead:bytesRead+size]...)

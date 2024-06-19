@@ -33,7 +33,7 @@ func TestMarshalDomainExactDomainInLookup(t *testing.T) {
 	)
 
 	expectedBytes := []byte{
-		0xc0, 0x0c, 0x00,
+		0xc0, 0x0c,
 	}
 
 	actualBytes := MarshalDomain(domain, lookup)
@@ -51,7 +51,7 @@ func TestMarshalDomainPartOfDomainInLookup(t *testing.T) {
 	)
 
 	expectedBytes := []byte{
-		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00,
+		0x02, 0x6d, 0x78, 0xc0, 0x0c,
 	}
 
 	actualBytes := MarshalDomain(domain, lookup)
@@ -92,14 +92,14 @@ func TestUnmarshalDomainEmptyLookup(t *testing.T) {
 func TestUnmarshalDomainExactDomainInLookup(t *testing.T) {
 	var (
 		bytes = []byte{
-			0xc0, 0x0c, 0x00,
+			0xc0, 0x0c,
 		}
 		lookup = map[int]string{12: "google.com."}
 	)
 
 	var (
 		expectedDomain    = "google.com."
-		expectedBytesRead = 3
+		expectedBytesRead = 2
 	)
 
 	actualDomain, actualBytesRead := UnmarshalDomain(bytes, lookup)
@@ -118,14 +118,14 @@ func TestUnmarshalDomainExactDomainInLookup(t *testing.T) {
 func TestUnmarshalDomainPartOfDomainInLookup(t *testing.T) {
 	var (
 		bytes = []byte{
-			0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00,
+			0x02, 0x6d, 0x78, 0xc0, 0x0c,
 		}
 		lookup = map[int]string{12: "google.com."}
 	)
 
 	var (
 		expectedDomain    = "mx.google.com."
-		expectedBytesRead = 6
+		expectedBytesRead = 5
 	)
 
 	actualDomain, actualBytesRead := UnmarshalDomain(bytes, lookup)
