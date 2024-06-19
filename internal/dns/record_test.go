@@ -45,7 +45,6 @@ func TestMarshalRecordEmptyLookup(t *testing.T) {
 			Type:   RecordTypeA,
 			Class:  RecordClassIN,
 			Ttl:    86400,
-			Length: 4,
 			Data:   []byte{142, 251, 37, 110},
 		}
 		lookup = map[int]string{}
@@ -73,7 +72,6 @@ func TestMarshalRecordExactDomainInLookup(t *testing.T) {
 			Type:   RecordTypeA,
 			Class:  RecordClassIN,
 			Ttl:    86400,
-			Length: 4,
 			Data:   []byte{142, 251, 37, 110},
 		}
 		lookup = map[int]string{12: "google.com."}
@@ -99,7 +97,6 @@ func TestMarshalRecordPartOfDomainInLookup(t *testing.T) {
 			Type:   RecordTypeMX,
 			Class:  RecordClassIN,
 			Ttl:    86400,
-			Length: 4,
 			Data:   []byte{142, 251, 37, 110},
 		}
 		lookup = map[int]string{12: "google.com."}
@@ -136,7 +133,6 @@ func TestUnmarshalRecordEmptyLookup(t *testing.T) {
 			Type:   RecordTypeA,
 			Class:  RecordClassIN,
 			Ttl:    86400,
-			Length: 4,
 			Data:   []byte{142, 251, 37, 110},
 		}
 		expectedBytesRead = 26
@@ -170,7 +166,6 @@ func TestUnmarshalRecordExactDomainInLookup(t *testing.T) {
 			Type:   RecordTypeA,
 			Class:  RecordClassIN,
 			Ttl:    86400,
-			Length: 4,
 			Data:   []byte{142, 251, 37, 110},
 		}
 		expectedBytesRead = 16
@@ -205,7 +200,6 @@ func TestUnmarshalRecordPartOfDomainInLookup(t *testing.T) {
 			Type:   RecordTypeMX,
 			Class:  RecordClassIN,
 			Ttl:    86400,
-			Length: 4,
 			Data:   []byte{142, 251, 37, 110},
 		}
 		expectedBytesRead = 19

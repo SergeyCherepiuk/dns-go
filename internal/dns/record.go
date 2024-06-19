@@ -39,7 +39,6 @@ type Record struct {
 	Type   RecordType
 	Class  RecordClass
 	Ttl    uint32
-	Length uint16
 	Data   []byte
 }
 
@@ -58,7 +57,8 @@ func MarshalRecord(record Record, lookup map[int]string) []byte {
 	ttlBytes := utils.Uint32ToBytes(record.Ttl)
 	bytes = append(bytes, ttlBytes[:]...)
 
-	lengthBytes := utils.Uint16ToBytes(record.Length)
+	length := uint16(len(record.Data))
+	lengthBytes := utils.Uint16ToBytes(length)
 	bytes = append(bytes, lengthBytes[:]...)
 
 	bytes = append(bytes, record.Data...)
@@ -79,18 +79,19 @@ func UnmarshalRecord(bytes []byte, lookup map[int]string) (Record, int) {
 	bytesRead += 4
 
 	lengthBytes := [2]byte(bytes[bytesRead : bytesRead+2])
+	length := int(utils.BytesToUint16(lengthBytes))
 	bytesRead += 2
+
+	dataBytes := bytes[bytesRead : bytesRead+length]
+	bytesRead += length
 
 	record := Record{
 		Domain: domain,
 		Type:   RecordType(utils.BytesToUint16(typeBytes)),
 		Class:  RecordClass(utils.BytesToUint16(classBytes)),
 		Ttl:    utils.BytesToUint32(ttlBytes),
-		Length: utils.BytesToUint16(lengthBytes),
+		Data:   dataBytes,
 	}
-
-	record.Data = bytes[bytesRead : bytesRead+int(record.Length)]
-	bytesRead += int(record.Length)
 
 	return record, bytesRead
 }
