@@ -35,7 +35,7 @@ func Diff[T any](actual, expected T) DiffEntries {
 	rt := reflect.TypeOf(actual)
 	rva := reflect.ValueOf(actual)
 	rve := reflect.ValueOf(expected)
-	return diff(rt, rva, rve, []string{}, rt.Name())
+	return diff(rt, rva, rve, []string{}, name(rt))
 }
 
 func diff(rt reflect.Type, rva, rve reflect.Value, path []string, name string) DiffEntries {
@@ -124,6 +124,41 @@ func diffStruct(rt reflect.Type, rva, rve reflect.Value, path []string) DiffEntr
 		entries = append(entries, fieldEntries...)
 	}
 	return entries
+}
+
+func name(rt reflect.Type) string {
+	if rt.Name() != "" {
+		return rt.Name()
+	}
+
+	switch rt.Kind() {
+	case reflect.Bool:
+		return "<bool>"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return "<int>"
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return "<uint>"
+	case reflect.Float32, reflect.Float64:
+		return "<float>"
+	case reflect.String:
+		return "<string>"
+	case reflect.Slice:
+		return "<slice>"
+	case reflect.Array:
+		return "<array>"
+	case reflect.Map:
+		return "<map>"
+	case reflect.Struct:
+		return "<struct>"
+	case reflect.Pointer, reflect.Uintptr, reflect.UnsafePointer:
+		return "<pointer>"
+	case reflect.Func:
+		return "<func>"
+	case reflect.Chan:
+		return "<chan>"
+	default:
+		return "<any>"
+	}
 }
 
 func copyAppend(slice []string, s string) []string {
