@@ -1,7 +1,6 @@
 package dns
 
 import (
-	"reflect"
 	"slices"
 	"testing"
 
@@ -83,8 +82,8 @@ func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 
 		// Question 2 (mx.google.com.)
-		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
-		0x00, 0x01,
+		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f, 0x00,
+		0x01,
 	}
 
 	actualBytes := MarshalPacket(packet)
@@ -130,11 +129,11 @@ func TestMarshalQueryPacketThreeQuestions(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 
 		// Question 2 (mx.google.com.)
-		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
-		0x00, 0x01,
+		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f, 0x00,
+		0x01,
 
 		// Question 3 (com.)
-		0xc0, 0x13, 0x00, 0x00, 0x01, 0x00, 0x01,
+		0xc0, 0x13, 0x00, 0x01, 0x00, 0x01,
 	}
 
 	actualBytes := MarshalPacket(packet)
@@ -180,8 +179,8 @@ func TestUnmarshalQueryPacketOneQuestion(t *testing.T) {
 
 	actualPacket := UnmarshalPacket(bytes)
 
-	if !reflect.DeepEqual(actualPacket, expectedPackcet) {
-		entries := utils.Diff(actualPacket, expectedPackcet)
+	entries := utils.Diff(actualPacket, expectedPackcet)
+	if len(entries) > 0 {
 		t.Fatal(entries.String())
 	}
 }
@@ -197,8 +196,8 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 
 		// Question 2 (mx.google.com.)
-		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
-		0x00, 0x01,
+		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f, 0x00,
+		0x01,
 	}
 
 	expectedPackcet := Packet{
@@ -226,8 +225,8 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 
 	actualPacket := UnmarshalPacket(bytes)
 
-	if !reflect.DeepEqual(actualPacket, expectedPackcet) {
-		entries := utils.Diff(actualPacket, expectedPackcet)
+	entries := utils.Diff(actualPacket, expectedPackcet)
+	if len(entries) > 0 {
 		t.Fatal(entries.String())
 	}
 }
@@ -243,11 +242,11 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 
 		// Question 2 (mx.google.com.)
-		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x00, 0x0f,
-		0x00, 0x01,
+		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f, 0x00,
+		0x01,
 
 		// Question 3 (com.)
-		0xc0, 0x13, 0x00, 0x00, 0x01, 0x00, 0x01,
+		0xc0, 0x13, 0x00, 0x01, 0x00, 0x01,
 	}
 
 	expectedPackcet := Packet{
@@ -276,8 +275,104 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 
 	actualPacket := UnmarshalPacket(bytes)
 
-	if !reflect.DeepEqual(actualPacket, expectedPackcet) {
-		entries := utils.Diff(actualPacket, expectedPackcet)
+	entries := utils.Diff(actualPacket, expectedPackcet)
+	if len(entries) > 0 {
+		t.Fatal(entries.String())
+	}
+}
+
+func TestMarshalPacketOneAnswer(t *testing.T) {
+	packet := Packet{
+		Header: Header{
+			ID:                           0x1234,
+			PacketType:                   PacketTypeResponse,
+			Opcode:                       OpcodeQuery,
+			AuthoritativeAnswer:          true,
+			Truncated:                    false,
+			RecursionDesired:             true,
+			RecursionAvailable:           true,
+			AuthenticData:                true,
+			CheckingDisabled:             false,
+			ResponseCode:                 ResponseCodeNoError,
+			QuestionSectionSize:          1,
+			AnswerSectionSize:            1,
+			AuthorityRecordsSectionSize:  0,
+			AdditionalRecordsSectionSize: 0,
+		},
+		Questions: []Question{
+			{"google.com.", QuestionTypeA, QuestionClassIN},
+		},
+		Answers: []Record{
+			{"google.com.", RecordTypeA, RecordClassIN, 86400, []byte{142, 251, 37, 110}},
+		},
+	}
+
+	expectedBytes := []byte{
+		// Header
+		0x12, 0x34, 0x85, 0xa0, 0x00, 0x01, 0x00, 0x01,
+		0x00, 0x00, 0x00, 0x00,
+
+		// Question 1 (google.com.)
+		0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03,
+		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
+
+		// Answer 1 (google.com. -> 142.251.37.110)
+		0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
+		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
+	}
+
+	actualBytes := MarshalPacket(packet)
+
+	if !slices.Equal(actualBytes, expectedBytes) {
+		entries := utils.Diff(actualBytes, expectedBytes)
+		t.Fatal(entries.String())
+	}
+}
+
+func TestUnmarshalPacketOneAnswer(t *testing.T) {
+	bytes := []byte{
+		// Header
+		0x12, 0x34, 0x85, 0xa0, 0x00, 0x01, 0x00, 0x01,
+		0x00, 0x00, 0x00, 0x00,
+
+		// Question 1 (google.com.)
+		0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03,
+		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
+
+		// Answer 1 (google.com. -> 142.251.37.110)
+		0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
+		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
+	}
+
+	expectedPacket := Packet{
+		Header: Header{
+			ID:                           0x1234,
+			PacketType:                   PacketTypeResponse,
+			Opcode:                       OpcodeQuery,
+			AuthoritativeAnswer:          true,
+			Truncated:                    false,
+			RecursionDesired:             true,
+			RecursionAvailable:           true,
+			AuthenticData:                true,
+			CheckingDisabled:             false,
+			ResponseCode:                 ResponseCodeNoError,
+			QuestionSectionSize:          1,
+			AnswerSectionSize:            1,
+			AuthorityRecordsSectionSize:  0,
+			AdditionalRecordsSectionSize: 0,
+		},
+		Questions: []Question{
+			{"google.com.", QuestionTypeA, QuestionClassIN},
+		},
+		Answers: []Record{
+			{"google.com.", RecordTypeA, RecordClassIN, 86400, []byte{142, 251, 37, 110}},
+		},
+	}
+
+	actualPacket := UnmarshalPacket(bytes)
+
+	entries := utils.Diff(actualPacket, expectedPacket)
+	if len(entries) > 0 {
 		t.Fatal(entries.String())
 	}
 }
