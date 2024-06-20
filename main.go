@@ -30,7 +30,7 @@ func main() {
 		},
 		Questions: []dns.Question{
 			{
-				Domain: "google.com.",
+				Domain: "www.yahoo.com.",
 				Type:   dns.QuestionTypeA,
 				Class:  dns.QuestionClassIN,
 			},
@@ -58,11 +58,13 @@ func main() {
 	response := dns.UnmarshalPacket(responseBytes[:n])
 
 	for _, answer := range response.Answers {
-		fmt.Printf(
-			"%s -> %v (ttl: %d)\n",
-			answer.Domain,
-			net.IP(answer.Data),
-			answer.Ttl,
-		)
+		if answer.Type == dns.RecordTypeA {
+			fmt.Printf(
+				"%s -> %v (ttl: %d)\n",
+				answer.Domain,
+				net.IP(answer.Data),
+				answer.Ttl,
+			)
+		}
 	}
 }

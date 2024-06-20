@@ -25,42 +25,10 @@ func MarshalPacket(packet Packet) []byte {
 	bytesWritten += HeaderSize
 
 	lookup := make(map[int]string, 0)
-
-	bytesWritten += marshal(marshalInput[Question]{
-		Items:       packet.Questions,
-		MarshalFunc: MarshalQuestion,
-		DomainFunc:  func(q Question) string { return q.Domain },
-		Bytes:       &bytes,
-		Offset:      bytesWritten,
-		Lookup:      lookup,
-	})
-
-	bytesWritten += marshal(marshalInput[Record]{
-		Items:       packet.Answers,
-		MarshalFunc: MarshalRecord,
-		DomainFunc:  func(r Record) string { return r.Domain },
-		Bytes:       &bytes,
-		Offset:      bytesWritten,
-		Lookup:      lookup,
-	})
-
-	bytesWritten += marshal(marshalInput[Record]{
-		Items:       packet.AuthorityRecords,
-		MarshalFunc: MarshalRecord,
-		DomainFunc:  func(r Record) string { return r.Domain },
-		Bytes:       &bytes,
-		Offset:      bytesWritten,
-		Lookup:      lookup,
-	})
-
-	bytesWritten += marshal(marshalInput[Record]{
-		Items:       packet.AdditionalRecords,
-		MarshalFunc: MarshalRecord,
-		DomainFunc:  func(r Record) string { return r.Domain },
-		Bytes:       &bytes,
-		Offset:      bytesWritten,
-		Lookup:      lookup,
-	})
+	bytesWritten += marshalQuestions(packet.Questions, &bytes, bytesWritten, lookup)
+	bytesWritten += marshalRecords(packet.Answers, &bytes, bytesWritten, lookup)
+	bytesWritten += marshalRecords(packet.AuthorityRecords, &bytes, bytesWritten, lookup)
+	bytesWritten += marshalRecords(packet.AdditionalRecords, &bytes, bytesWritten, lookup)
 
 	return bytes
 }
@@ -76,97 +44,90 @@ func UnmarshalPacket(bytes []byte) Packet {
 	bytesRead += HeaderSize
 
 	lookup := make(map[int]string, 0)
-
-	packet.Questions = unmarshal(unmarshalInput[Question]{
-		Bytes:         bytes,
-		Offset:        &bytesRead,
-		Count:         header.QuestionSectionSize,
-		UnmarshalFunc: UnmarshalQuestion,
-		DomainFunc:    func(q Question) string { return q.Domain },
-		Lookup:        lookup,
-	})
-
-	packet.Answers = unmarshal(unmarshalInput[Record]{
-		Bytes:         bytes,
-		Offset:        &bytesRead,
-		Count:         header.AnswerSectionSize,
-		UnmarshalFunc: UnmarshalRecord,
-		DomainFunc:    func(r Record) string { return r.Domain },
-		Lookup:        lookup,
-	})
-
-	packet.AuthorityRecords = unmarshal(unmarshalInput[Record]{
-		Bytes:         bytes,
-		Offset:        &bytesRead,
-		Count:         header.AuthorityRecordsSectionSize,
-		UnmarshalFunc: UnmarshalRecord,
-		DomainFunc:    func(r Record) string { return r.Domain },
-		Lookup:        lookup,
-	})
-
-	packet.AdditionalRecords = unmarshal(unmarshalInput[Record]{
-		Bytes:         bytes,
-		Offset:        &bytesRead,
-		Count:         header.AdditionalRecordsSectionSize,
-		UnmarshalFunc: UnmarshalRecord,
-		DomainFunc:    func(r Record) string { return r.Domain },
-		Lookup:        lookup,
-	})
+	packet.Questions = unmarshalQuestions(bytes, &bytesRead, header.QuestionSectionSize, lookup)
+	packet.Answers = unmarshalRecords(bytes, &bytesRead, header.AnswerSectionSize, lookup)
+	packet.AuthorityRecords = unmarshalRecords(bytes, &bytesRead, header.AuthorityRecordsSectionSize, lookup)
+	packet.AdditionalRecords = unmarshalRecords(bytes, &bytesRead, header.AdditionalRecordsSectionSize, lookup)
 
 	return packet
 }
 
-type marshalInput[T any] struct {
-	Items       []T
-	MarshalFunc func(T, map[int]string) []byte
-	DomainFunc  func(T) string
-	Bytes       *[]byte
-	Offset      int
-	Lookup      map[int]string
-}
-
-func marshal[T any](input marshalInput[T]) int {
+func marshalQuestions(questions []Question, bytes *[]byte, offset int, lookup map[int]string) int {
 	var bytesWritten int
 
-	for _, item := range input.Items {
-		itemBytes := input.MarshalFunc(item, input.Lookup)
-		*input.Bytes = append(*input.Bytes, itemBytes...)
+	for _, question := range questions {
+		questionBytes := MarshalQuestion(question, lookup)
+		*bytes = append(*bytes, questionBytes...)
 
-		cacheDomain(input.DomainFunc(item), input.Offset+bytesWritten, input.Lookup)
+		cacheDomain(question.Domain, offset+bytesWritten, lookup)
 
-		bytesWritten += len(itemBytes)
+		bytesWritten += len(questionBytes)
 	}
 
 	return bytesWritten
 }
 
-type unmarshalInput[T any] struct {
-	Bytes         []byte
-	Offset        *int
-	Count         uint16
-	UnmarshalFunc func([]byte, map[int]string) (T, int)
-	DomainFunc    func(T) string
-	Lookup        map[int]string
+func marshalRecords(records []Record, bytes *[]byte, offset int, lookup map[int]string) int {
+	var bytesWritten int
+
+	for _, record := range records {
+		recordBytes := MarshalRecord(record, lookup)
+		*bytes = append(*bytes, recordBytes...)
+
+		cacheDomain(record.Domain, offset+bytesWritten, lookup)
+
+		bytesWritten += len(recordBytes)
+	}
+
+	return bytesWritten
 }
 
-func unmarshal[T any](input unmarshalInput[T]) []T {
+func unmarshalQuestions(bytes []byte, offset *int, count uint16, lookup map[int]string) []Question {
 	var (
-		items     = make([]T, input.Count)
+		questions = make([]Question, count)
 		bytesRead int
 	)
 
-	for i := range input.Count {
-		item, n := input.UnmarshalFunc(input.Bytes[*input.Offset+bytesRead:], input.Lookup)
-		items[i] = item
+	for i := range count {
+		question, n := UnmarshalQuestion(bytes[*offset+bytesRead:], lookup)
+		questions[i] = question
 
-		cacheDomain(input.DomainFunc(item), *input.Offset+bytesRead, input.Lookup)
+		cacheDomain(question.Domain, *offset+bytesRead, lookup)
 
 		bytesRead += n
 	}
 
-	*input.Offset += bytesRead
+	*offset += bytesRead
 
-	return items
+	return questions
+}
+
+func unmarshalRecords(bytes []byte, offset *int, count uint16, lookup map[int]string) []Record {
+	var (
+		records   = make([]Record, count)
+		bytesRead int
+	)
+
+	for i := range count {
+		record, n := UnmarshalRecord(bytes[*offset+bytesRead:], lookup)
+		records[i] = record
+
+		cacheDomain(record.Domain, *offset+bytesRead, lookup)
+
+		bytesRead += n
+
+		// TODO: Implement data parsing of the essential question/record types
+		// (A, AAAA, NS, CNAME, MX). Move this logic to the Marshal-/Unmarshal-
+		// functions. Think about creating separate strutures for each type.
+		if record.Type == RecordTypeCNAME {
+			canonicalDomain, _ := UnmarshalDomain(record.Data, lookup)
+			cacheDomain(canonicalDomain, *offset+bytesRead-len(record.Data), lookup)
+		}
+	}
+
+	*offset += bytesRead
+
+	return records
 }
 
 // TODO (low priority): Optimize caching. Lookup table can potentially grow big.
