@@ -47,10 +47,10 @@ type Question struct {
 	Class  QuestionClass
 }
 
-func MarshalQuestion(question Question, lookup map[int]string) []byte {
+func marshalQuestion(question Question, lookup map[int]string) []byte {
 	var bytes []byte
 
-	domainBytes := MarshalDomain(question.Domain, lookup)
+	domainBytes := marshalDomain(question.Domain, lookup)
 	bytes = append(bytes, domainBytes...)
 
 	typeBytes := utils.Uint16ToBytes(uint16(question.Type))
@@ -62,8 +62,8 @@ func MarshalQuestion(question Question, lookup map[int]string) []byte {
 	return bytes
 }
 
-func UnmarshalQuestion(bytes []byte, lookup map[int]string) (Question, int) {
-	domain, bytesRead := UnmarshalDomain(bytes, lookup)
+func unmarshalQuestion(bytes []byte, lookup map[int]string) (Question, int) {
+	domain, bytesRead := unmarshalDomain(bytes, lookup)
 
 	typeBytes := [2]byte(bytes[bytesRead : bytesRead+2])
 	bytesRead += 2

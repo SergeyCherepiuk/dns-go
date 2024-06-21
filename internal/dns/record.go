@@ -42,10 +42,10 @@ type Record struct {
 	Data   []byte
 }
 
-func MarshalRecord(record Record, lookup map[int]string) []byte {
+func marshalRecord(record Record, lookup map[int]string) []byte {
 	var bytes []byte
 
-	domainBytes := MarshalDomain(record.Domain, lookup)
+	domainBytes := marshalDomain(record.Domain, lookup)
 	bytes = append(bytes, domainBytes...)
 
 	typeBytes := utils.Uint16ToBytes(uint16(record.Type))
@@ -66,8 +66,8 @@ func MarshalRecord(record Record, lookup map[int]string) []byte {
 	return bytes
 }
 
-func UnmarshalRecord(bytes []byte, lookup map[int]string) (Record, int) {
-	domain, bytesRead := UnmarshalDomain(bytes, lookup)
+func unmarshalRecord(bytes []byte, lookup map[int]string) (Record, int) {
+	domain, bytesRead := unmarshalDomain(bytes, lookup)
 
 	typeBytes := [2]byte(bytes[bytesRead : bytesRead+2])
 	bytesRead += 2

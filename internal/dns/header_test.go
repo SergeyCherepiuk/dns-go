@@ -53,7 +53,7 @@ func TestMarshalHeaderQueryPacket(t *testing.T) {
 		0x00, 0x00, 0x00, 0x00,
 	}
 
-	actualBytes := MarshalHeader(header)
+	actualBytes := marshalHeader(header)
 
 	if actualBytes != expectedBytes {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -82,7 +82,7 @@ func TestMarshalHeaderResponsePacket(t *testing.T) {
 		0x00, 0x00, 0x00, 0x00,
 	}
 
-	actualBytes := MarshalHeader(header)
+	actualBytes := marshalHeader(header)
 
 	if actualBytes != expectedBytes {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -113,7 +113,7 @@ func TestUnmarshalHeaderQueryPacket(t *testing.T) {
 		AdditionalRecordsSectionSize: 0,
 	}
 
-	actualHeader := UnmarshalHeader(bytes)
+	actualHeader := unmarshalHeader(bytes)
 
 	if actualHeader != expectedHeader {
 		entries := utils.Diff(actualHeader, expectedHeader)
@@ -142,7 +142,7 @@ func TestUnmarshalHeaderResponsePacket(t *testing.T) {
 		AdditionalRecordsSectionSize: 0,
 	}
 
-	actualHeader := UnmarshalHeader(bytes)
+	actualHeader := unmarshalHeader(bytes)
 
 	if actualHeader != expectedHeader {
 		entries := utils.Diff(actualHeader, expectedHeader)

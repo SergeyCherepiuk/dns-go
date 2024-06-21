@@ -20,7 +20,7 @@ func MarshalPacket(packet Packet) []byte {
 		bytesWritten int
 	)
 
-	headerBytes := MarshalHeader(packet.Header)
+	headerBytes := marshalHeader(packet.Header)
 	bytes = append(bytes, headerBytes[:]...)
 	bytesWritten += HeaderSize
 
@@ -38,7 +38,7 @@ func UnmarshalPacket(bytes []byte) Packet {
 
 	var (
 		headerBytes = [HeaderSize]byte(bytes[bytesRead : bytesRead+HeaderSize])
-		header      = UnmarshalHeader(headerBytes)
+		header      = unmarshalHeader(headerBytes)
 		packet      = Packet{Header: header}
 	)
 	bytesRead += HeaderSize
@@ -56,7 +56,7 @@ func marshalQuestions(questions []Question, bytes *[]byte, offset int, lookup ma
 	var bytesWritten int
 
 	for _, question := range questions {
-		questionBytes := MarshalQuestion(question, lookup)
+		questionBytes := marshalQuestion(question, lookup)
 		*bytes = append(*bytes, questionBytes...)
 
 		cacheDomain(question.Domain, offset+bytesWritten, lookup)
@@ -71,7 +71,7 @@ func marshalRecords(records []Record, bytes *[]byte, offset int, lookup map[int]
 	var bytesWritten int
 
 	for _, record := range records {
-		recordBytes := MarshalRecord(record, lookup)
+		recordBytes := marshalRecord(record, lookup)
 		*bytes = append(*bytes, recordBytes...)
 
 		cacheDomain(record.Domain, offset+bytesWritten, lookup)
@@ -89,7 +89,7 @@ func unmarshalQuestions(bytes []byte, offset *int, count uint16, lookup map[int]
 	)
 
 	for i := range count {
-		question, n := UnmarshalQuestion(bytes[*offset+bytesRead:], lookup)
+		question, n := unmarshalQuestion(bytes[*offset+bytesRead:], lookup)
 		questions[i] = question
 
 		cacheDomain(question.Domain, *offset+bytesRead, lookup)
@@ -109,7 +109,7 @@ func unmarshalRecords(bytes []byte, offset *int, count uint16, lookup map[int]st
 	)
 
 	for i := range count {
-		record, n := UnmarshalRecord(bytes[*offset+bytesRead:], lookup)
+		record, n := unmarshalRecord(bytes[*offset+bytesRead:], lookup)
 		records[i] = record
 
 		cacheDomain(record.Domain, *offset+bytesRead, lookup)
@@ -120,7 +120,7 @@ func unmarshalRecords(bytes []byte, offset *int, count uint16, lookup map[int]st
 		// (A, AAAA, NS, CNAME, MX). Move this logic to the Marshal-/Unmarshal-
 		// functions. Think about creating separate strutures for each type.
 		if record.Type == RecordTypeCNAME {
-			canonicalDomain, _ := UnmarshalDomain(record.Data, lookup)
+			canonicalDomain, _ := unmarshalDomain(record.Data, lookup)
 			cacheDomain(canonicalDomain, *offset+bytesRead-len(record.Data), lookup)
 		}
 	}

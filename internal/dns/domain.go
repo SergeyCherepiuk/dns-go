@@ -6,7 +6,7 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
-func MarshalDomain(domain string, lookup map[int]string) []byte {
+func marshalDomain(domain string, lookup map[int]string) []byte {
 	var bytes []byte
 
 	subdomains := strings.Split(domain, ".")
@@ -29,7 +29,7 @@ func MarshalDomain(domain string, lookup map[int]string) []byte {
 	return bytes
 }
 
-func UnmarshalDomain(bytes []byte, lookup map[int]string) (string, int) {
+func unmarshalDomain(bytes []byte, lookup map[int]string) (string, int) {
 	var (
 		domain    []byte
 		bytesRead int

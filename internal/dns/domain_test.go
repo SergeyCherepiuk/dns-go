@@ -18,7 +18,7 @@ func TestMarshalDomainEmptyLookup(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00,
 	}
 
-	actualBytes := MarshalDomain(domain, lookup)
+	actualBytes := marshalDomain(domain, lookup)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -36,7 +36,7 @@ func TestMarshalDomainExactDomainInLookup(t *testing.T) {
 		0xc0, 0x0c,
 	}
 
-	actualBytes := MarshalDomain(domain, lookup)
+	actualBytes := marshalDomain(domain, lookup)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -54,7 +54,7 @@ func TestMarshalDomainPartOfDomainInLookup(t *testing.T) {
 		0x02, 0x6d, 0x78, 0xc0, 0x0c,
 	}
 
-	actualBytes := MarshalDomain(domain, lookup)
+	actualBytes := marshalDomain(domain, lookup)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -76,7 +76,7 @@ func TestUnmarshalDomainEmptyLookup(t *testing.T) {
 		expectedBytesRead = 12
 	)
 
-	actualDomain, actualBytesRead := UnmarshalDomain(bytes, lookup)
+	actualDomain, actualBytesRead := unmarshalDomain(bytes, lookup)
 
 	if actualDomain != expectedDomain {
 		entries := utils.Diff(actualDomain, expectedDomain)
@@ -102,7 +102,7 @@ func TestUnmarshalDomainExactDomainInLookup(t *testing.T) {
 		expectedBytesRead = 2
 	)
 
-	actualDomain, actualBytesRead := UnmarshalDomain(bytes, lookup)
+	actualDomain, actualBytesRead := unmarshalDomain(bytes, lookup)
 
 	if actualDomain != expectedDomain {
 		entries := utils.Diff(actualDomain, expectedDomain)
@@ -128,7 +128,7 @@ func TestUnmarshalDomainPartOfDomainInLookup(t *testing.T) {
 		expectedBytesRead = 5
 	)
 
-	actualDomain, actualBytesRead := UnmarshalDomain(bytes, lookup)
+	actualDomain, actualBytesRead := unmarshalDomain(bytes, lookup)
 
 	if actualDomain != expectedDomain {
 		entries := utils.Diff(actualDomain, expectedDomain)

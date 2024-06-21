@@ -57,7 +57,7 @@ func TestMarshalRecordEmptyLookup(t *testing.T) {
 		0x25, 0x6e,
 	}
 
-	actualBytes := MarshalRecord(record, lookup)
+	actualBytes := marshalRecord(record, lookup)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -82,7 +82,7 @@ func TestMarshalRecordExactDomainInLookup(t *testing.T) {
 		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
 	}
 
-	actualBytes := MarshalRecord(record, lookup)
+	actualBytes := marshalRecord(record, lookup)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -108,7 +108,7 @@ func TestMarshalRecordPartOfDomainInLookup(t *testing.T) {
 		0xfb, 0x25, 0x6e,
 	}
 
-	actualBytes := MarshalRecord(record, lookup)
+	actualBytes := marshalRecord(record, lookup)
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -138,7 +138,7 @@ func TestUnmarshalRecordEmptyLookup(t *testing.T) {
 		expectedBytesRead = 26
 	)
 
-	actualRecord, actualBytesRead := UnmarshalRecord(bytes, lookup)
+	actualRecord, actualBytesRead := unmarshalRecord(bytes, lookup)
 
 	if !reflect.DeepEqual(actualRecord, expectedRecord) {
 		entries := utils.Diff(actualRecord, expectedRecord)
@@ -171,7 +171,7 @@ func TestUnmarshalRecordExactDomainInLookup(t *testing.T) {
 		expectedBytesRead = 16
 	)
 
-	actualRecord, actualBytesRead := UnmarshalRecord(bytes, lookup)
+	actualRecord, actualBytesRead := unmarshalRecord(bytes, lookup)
 
 	if !reflect.DeepEqual(actualRecord, expectedRecord) {
 		entries := utils.Diff(actualRecord, expectedRecord)
@@ -205,7 +205,7 @@ func TestUnmarshalRecordPartOfDomainInLookup(t *testing.T) {
 		expectedBytesRead = 19
 	)
 
-	actualRecord, actualBytesRead := UnmarshalRecord(bytes, lookup)
+	actualRecord, actualBytesRead := unmarshalRecord(bytes, lookup)
 
 	if !reflect.DeepEqual(actualRecord, expectedRecord) {
 		entries := utils.Diff(actualRecord, expectedRecord)

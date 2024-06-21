@@ -49,7 +49,7 @@ type Header struct {
 	AdditionalRecordsSectionSize uint16
 }
 
-func MarshalHeader(header Header) [HeaderSize]byte {
+func marshalHeader(header Header) [HeaderSize]byte {
 	var (
 		packetTypeBit          = uint16(header.PacketType) << 15
 		opcodeBits             = uint16(header.Opcode) << 11
@@ -84,7 +84,7 @@ func MarshalHeader(header Header) [HeaderSize]byte {
 	}
 }
 
-func UnmarshalHeader(bytes [HeaderSize]byte) Header {
+func unmarshalHeader(bytes [HeaderSize]byte) Header {
 	var (
 		packetTypeBit          = (bytes[2] >> 7) & 0b00000001
 		opcodeBits             = (bytes[2] >> 3) & 0b00001111
