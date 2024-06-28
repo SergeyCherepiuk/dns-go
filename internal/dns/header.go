@@ -49,7 +49,7 @@ type Header struct {
 	AdditionalRecordsSectionSize uint16
 }
 
-func marshalHeader(header Header) [HeaderSize]byte {
+func marshalHeader(w *PacketWriter, header Header) error {
 	var (
 		packetTypeBit          = uint16(header.PacketType) << 15
 		opcodeBits             = uint16(header.Opcode) << 11
@@ -74,7 +74,7 @@ func marshalHeader(header Header) [HeaderSize]byte {
 		additionalRecordsSectionSizeBits = utils.Uint16ToBytes(header.AdditionalRecordsSectionSize)
 	)
 
-	return [HeaderSize]byte{
+	bytes := []byte{
 		idBits[0], idBits[1],
 		flagsBits[0], flagsBits[1],
 		questionSectionSizeBits[0], questionSectionSizeBits[1],
@@ -82,9 +82,16 @@ func marshalHeader(header Header) [HeaderSize]byte {
 		authorityRecordsSectionSizeBits[0], authorityRecordsSectionSizeBits[1],
 		additionalRecordsSectionSizeBits[0], additionalRecordsSectionSizeBits[1],
 	}
+
+	return w.WriteBytes(bytes)
 }
 
-func unmarshalHeader(bytes [HeaderSize]byte) Header {
+func unmarshalHeader(r *PacketReader) (Header, error) {
+	bytes, err := r.ReadBytes(HeaderSize)
+	if err != nil {
+		return Header{}, err
+	}
+
 	var (
 		packetTypeBit          = (bytes[2] >> 7) & 0b00000001
 		opcodeBits             = (bytes[2] >> 3) & 0b00001111
@@ -97,7 +104,7 @@ func unmarshalHeader(bytes [HeaderSize]byte) Header {
 		responseCodeBits       = (bytes[3] >> 0) & 0b00001111
 	)
 
-	return Header{
+	header := Header{
 		ID:                           utils.BytesToUint16([2]byte(bytes[0:2])),
 		PacketType:                   PacketType(packetTypeBit),
 		Opcode:                       Opcode(opcodeBits),
@@ -113,4 +120,6 @@ func unmarshalHeader(bytes [HeaderSize]byte) Header {
 		AuthorityRecordsSectionSize:  utils.BytesToUint16([2]byte(bytes[8:10])),
 		AdditionalRecordsSectionSize: utils.BytesToUint16([2]byte(bytes[10:12])),
 	}
+
+	return header, nil
 }

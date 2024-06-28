@@ -1,7 +1,5 @@
 package dns
 
-import "github.com/SergeyCherepiuk/dns-go/internal/utils"
-
 type RecordType uint16
 
 const (
@@ -42,56 +40,78 @@ type Record struct {
 	Data   []byte
 }
 
-func marshalRecord(record Record, lookup map[int]string) []byte {
-	var bytes []byte
+func marshalRecord(w *PacketWriter, record Record) error {
+	err := w.WriteDomain(record.Domain)
+	if err != nil {
+		return err
+	}
 
-	domainBytes := marshalDomain(record.Domain, lookup)
-	bytes = append(bytes, domainBytes...)
+	err = w.WriteUint16(uint16(record.Type))
+	if err != nil {
+		return err
+	}
 
-	typeBytes := utils.Uint16ToBytes(uint16(record.Type))
-	bytes = append(bytes, typeBytes[:]...)
+	err = w.WriteUint16(uint16(record.Class))
+	if err != nil {
+		return err
+	}
 
-	classBytes := utils.Uint16ToBytes(uint16(record.Class))
-	bytes = append(bytes, classBytes[:]...)
+	err = w.WriteUint32(record.Ttl)
+	if err != nil {
+		return err
+	}
 
-	ttlBytes := utils.Uint32ToBytes(record.Ttl)
-	bytes = append(bytes, ttlBytes[:]...)
+	err = w.WriteUint16(uint16(len(record.Data)))
+	if err != nil {
+		return err
+	}
 
-	length := uint16(len(record.Data))
-	lengthBytes := utils.Uint16ToBytes(length)
-	bytes = append(bytes, lengthBytes[:]...)
+	err = w.WriteBytes(record.Data)
+	if err != nil {
+		return err
+	}
 
-	bytes = append(bytes, record.Data...)
-
-	return bytes
+	return nil
 }
 
-func unmarshalRecord(bytes []byte, lookup map[int]string) (Record, int) {
-	domain, bytesRead := unmarshalDomain(bytes, lookup)
+func unmarshalRecord(r *PacketReader) (Record, error) {
+	domain, err := r.ReadDomain()
+	if err != nil {
+		return Record{}, err
+	}
 
-	typeBytes := [2]byte(bytes[bytesRead : bytesRead+2])
-	bytesRead += 2
+	recordType, err := r.ReadUint16()
+	if err != nil {
+		return Record{}, err
+	}
 
-	classBytes := [2]byte(bytes[bytesRead : bytesRead+2])
-	bytesRead += 2
+	recordClass, err := r.ReadUint16()
+	if err != nil {
+		return Record{}, err
+	}
 
-	ttlBytes := [4]byte(bytes[bytesRead : bytesRead+4])
-	bytesRead += 4
+	ttl, err := r.ReadUint32()
+	if err != nil {
+		return Record{}, err
+	}
 
-	lengthBytes := [2]byte(bytes[bytesRead : bytesRead+2])
-	length := int(utils.BytesToUint16(lengthBytes))
-	bytesRead += 2
+	length, err := r.ReadUint16()
+	if err != nil {
+		return Record{}, err
+	}
 
-	dataBytes := bytes[bytesRead : bytesRead+length]
-	bytesRead += length
+	data, err := r.ReadBytes(int(length))
+	if err != nil {
+		return Record{}, err
+	}
 
 	record := Record{
 		Domain: domain,
-		Type:   RecordType(utils.BytesToUint16(typeBytes)),
-		Class:  RecordClass(utils.BytesToUint16(classBytes)),
-		Ttl:    utils.BytesToUint32(ttlBytes),
-		Data:   dataBytes,
+		Type:   RecordType(recordType),
+		Class:  RecordClass(recordClass),
+		Ttl:    ttl,
+		Data:   data,
 	}
 
-	return record, bytesRead
+	return record, nil
 }

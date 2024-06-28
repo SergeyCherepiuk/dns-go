@@ -1,9 +1,5 @@
 package dns
 
-import (
-	"github.com/SergeyCherepiuk/dns-go/internal/utils"
-)
-
 type QuestionType uint16
 
 const (
@@ -47,35 +43,46 @@ type Question struct {
 	Class  QuestionClass
 }
 
-func marshalQuestion(question Question, lookup map[int]string) []byte {
-	var bytes []byte
+func marshalQuestion(w *PacketWriter, question Question) error {
+	err := w.WriteDomain(question.Domain)
+	if err != nil {
+		return err
+	}
 
-	domainBytes := marshalDomain(question.Domain, lookup)
-	bytes = append(bytes, domainBytes...)
+	err = w.WriteUint16(uint16(question.Type))
+	if err != nil {
+		return err
+	}
 
-	typeBytes := utils.Uint16ToBytes(uint16(question.Type))
-	bytes = append(bytes, typeBytes[:]...)
+	err = w.WriteUint16(uint16(question.Class))
+	if err != nil {
+		return err
+	}
 
-	classBytes := utils.Uint16ToBytes(uint16(question.Class))
-	bytes = append(bytes, classBytes[:]...)
-
-	return bytes
+	return nil
 }
 
-func unmarshalQuestion(bytes []byte, lookup map[int]string) (Question, int) {
-	domain, bytesRead := unmarshalDomain(bytes, lookup)
+func unmarshalQuestion(r *PacketReader) (Question, error) {
+	domain, err := r.ReadDomain()
+	if err != nil {
+		return Question{}, err
+	}
 
-	typeBytes := [2]byte(bytes[bytesRead : bytesRead+2])
-	bytesRead += 2
+	questionType, err := r.ReadUint16()
+	if err != nil {
+		return Question{}, err
+	}
 
-	classBytes := [2]byte(bytes[bytesRead : bytesRead+2])
-	bytesRead += 2
+	questionClass, err := r.ReadUint16()
+	if err != nil {
+		return Question{}, err
+	}
 
 	question := Question{
 		Domain: domain,
-		Type:   QuestionType(utils.BytesToUint16(typeBytes)),
-		Class:  QuestionClass(utils.BytesToUint16(classBytes)),
+		Type:   QuestionType(questionType),
+		Class:  QuestionClass(questionClass),
 	}
 
-	return question, bytesRead
+	return question, nil
 }

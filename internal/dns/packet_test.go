@@ -40,7 +40,13 @@ func TestMarshalPacketOneQuestion(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	actualBytes := MarshalPacket(packet)
+	writer := NewPacketWriter()
+	err := MarshalPacket(writer, packet)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualBytes := writer.Bytes()
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -86,7 +92,13 @@ func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
 		0x01,
 	}
 
-	actualBytes := MarshalPacket(packet)
+	writer := NewPacketWriter()
+	err := MarshalPacket(writer, packet)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualBytes := writer.Bytes()
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -136,7 +148,13 @@ func TestMarshalQueryPacketThreeQuestions(t *testing.T) {
 		0xc0, 0x13, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	actualBytes := MarshalPacket(packet)
+	writer := NewPacketWriter()
+	err := MarshalPacket(writer, packet)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualBytes := writer.Bytes()
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -153,6 +171,11 @@ func TestUnmarshalQueryPacketOneQuestion(t *testing.T) {
 		// Question 1 (google.com.)
 		0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03,
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
+	}
+
+	reader, err := NewPacketReader(bytes)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	expectedPackcet := Packet{
@@ -177,7 +200,7 @@ func TestUnmarshalQueryPacketOneQuestion(t *testing.T) {
 		},
 	}
 
-	actualPacket := UnmarshalPacket(bytes)
+	actualPacket, err := UnmarshalPacket(reader)
 
 	entries := utils.Diff(actualPacket, expectedPackcet)
 	if len(entries) > 0 {
@@ -198,6 +221,11 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 		// Question 2 (mx.google.com.)
 		0x02, 0x6d, 0x78, 0xc0, 0x0c, 0x00, 0x0f, 0x00,
 		0x01,
+	}
+
+	reader, err := NewPacketReader(bytes)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	expectedPackcet := Packet{
@@ -223,7 +251,10 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 		},
 	}
 
-	actualPacket := UnmarshalPacket(bytes)
+	actualPacket, err := UnmarshalPacket(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	entries := utils.Diff(actualPacket, expectedPackcet)
 	if len(entries) > 0 {
@@ -247,6 +278,11 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 
 		// Question 3 (com.)
 		0xc0, 0x13, 0x00, 0x01, 0x00, 0x01,
+	}
+
+	reader, err := NewPacketReader(bytes)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	expectedPackcet := Packet{
@@ -273,7 +309,10 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 		},
 	}
 
-	actualPacket := UnmarshalPacket(bytes)
+	actualPacket, err := UnmarshalPacket(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	entries := utils.Diff(actualPacket, expectedPackcet)
 	if len(entries) > 0 {
@@ -321,7 +360,13 @@ func TestMarshalPacketOneAnswer(t *testing.T) {
 		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
 	}
 
-	actualBytes := MarshalPacket(packet)
+	writer := NewPacketWriter()
+	err := MarshalPacket(writer, packet)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualBytes := writer.Bytes()
 
 	if !slices.Equal(actualBytes, expectedBytes) {
 		entries := utils.Diff(actualBytes, expectedBytes)
@@ -342,6 +387,11 @@ func TestUnmarshalPacketOneAnswer(t *testing.T) {
 		// Answer 1 (google.com. -> 142.251.37.110)
 		0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
 		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
+	}
+
+	reader, err := NewPacketReader(bytes)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	expectedPacket := Packet{
@@ -369,7 +419,10 @@ func TestUnmarshalPacketOneAnswer(t *testing.T) {
 		},
 	}
 
-	actualPacket := UnmarshalPacket(bytes)
+	actualPacket, err := UnmarshalPacket(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	entries := utils.Diff(actualPacket, expectedPacket)
 	if len(entries) > 0 {

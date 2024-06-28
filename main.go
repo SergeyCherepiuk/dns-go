@@ -8,6 +8,23 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/dns"
 )
 
+var query = dns.Packet{
+	Header: dns.Header{
+		ID:                  0x1234,
+		PacketType:          dns.PacketTypeQuery,
+		Opcode:              dns.OpcodeQuery,
+		RecursionDesired:    true,
+		QuestionSectionSize: 1,
+	},
+	Questions: []dns.Question{
+		{
+			Domain: "www.yahoo.com.",
+			Type:   dns.QuestionTypeA,
+			Class:  dns.QuestionClassIN,
+		},
+	},
+}
+
 func main() {
 	var (
 		listenAddr  = net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}
@@ -15,31 +32,19 @@ func main() {
 	)
 
 	conn, err := net.DialUDP("udp", &listenAddr, &receiveAddr)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	query := dns.Packet{
-		Header: dns.Header{
-			ID:                  0x1234,
-			PacketType:          dns.PacketTypeQuery,
-			Opcode:              dns.OpcodeQuery,
-			RecursionDesired:    true,
-			QuestionSectionSize: 1,
-		},
-		Questions: []dns.Question{
-			{
-				Domain: "www.yahoo.com.",
-				Type:   dns.QuestionTypeA,
-				Class:  dns.QuestionClassIN,
-			},
-		},
+	writer := dns.NewPacketWriter()
+
+	err = dns.MarshalPacket(writer, query)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	queryBytes := dns.MarshalPacket(query)
+	queryBytes := writer.Bytes()
 	n, err := conn.Write(queryBytes)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,12 +55,19 @@ func main() {
 
 	responseBytes := make([]byte, 512)
 	n, err = conn.Read(responseBytes)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	response := dns.UnmarshalPacket(responseBytes[:n])
+	reader, err := dns.NewPacketReader(responseBytes[:n])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response, err := dns.UnmarshalPacket(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for _, answer := range response.Answers {
 		if answer.Type == dns.RecordTypeA {
