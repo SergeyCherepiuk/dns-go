@@ -16,7 +16,7 @@ var (
 	ErrNotEnoughBytes    = errors.New("not enough bytes")
 )
 
-func NewPacketReader(bytes []byte) (*PacketReader, error) {
+func newPacketReader(bytes []byte) (*PacketReader, error) {
 	if len(bytes) < 12 || len(bytes) > 512 {
 		return nil, ErrInvalidPacketSize
 	}

@@ -8,24 +8,59 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/dns"
 )
 
-var query = dns.Packet{
-	Header: dns.Header{
-		ID:                  0x1234,
-		PacketType:          dns.PacketTypeQuery,
-		Opcode:              dns.OpcodeQuery,
-		RecursionDesired:    true,
-		QuestionSectionSize: 1,
-	},
-	Questions: []dns.Question{
-		{
-			Domain: "www.yahoo.com.",
-			Type:   dns.QuestionTypeA,
-			Class:  dns.QuestionClassIN,
-		},
-	},
+func main() {
+	addr := net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 4321}
+	err := listen(addr)
+	log.Fatal(err)
 }
 
-func main() {
+func listen(addr net.UDPAddr) error {
+	for {
+		conn, err := net.ListenUDP("udp", &addr)
+		if err != nil {
+			return err
+		}
+
+		err = handleConnection(conn)
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func handleConnection(conn *net.UDPConn) error {
+	defer conn.Close()
+
+	buf := make([]byte, 512)
+	n, addr, err := conn.ReadFromUDP(buf)
+	if err != nil {
+		return err
+	}
+
+	query, err := dns.UnmarshalPacket(buf[:n])
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(query.String())
+
+	response, err := lookup(query)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(response.String())
+
+	responseBytes, err := dns.MarshalPacket(response)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.WriteToUDP(responseBytes, addr)
+	return err
+}
+
+func lookup(query dns.Packet) (dns.Packet, error) {
 	var (
 		listenAddr  = net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}
 		receiveAddr = net.UDPAddr{IP: net.IPv4(8, 8, 8, 8), Port: 53}
@@ -33,50 +68,29 @@ func main() {
 
 	conn, err := net.DialUDP("udp", &listenAddr, &receiveAddr)
 	if err != nil {
-		log.Fatal(err)
+		return dns.Packet{}, err
 	}
 
-	writer := dns.NewPacketWriter()
-
-	err = dns.MarshalPacket(writer, query)
+	queryBytes, err := dns.MarshalPacket(query)
 	if err != nil {
-		log.Fatal(err)
+		return dns.Packet{}, err
 	}
 
-	queryBytes := writer.Bytes()
 	n, err := conn.Write(queryBytes)
 	if err != nil {
-		log.Fatal(err)
+		return dns.Packet{}, err
 	}
 
 	if n != len(queryBytes) {
-		log.Fatalf("not all bytes have been read by the server (%d out of %d)", n, len(queryBytes))
+		err = fmt.Errorf("unread bytes (server read %d out of %d)", n, len(queryBytes))
+		return dns.Packet{}, err
 	}
 
 	responseBytes := make([]byte, 512)
 	n, err = conn.Read(responseBytes)
 	if err != nil {
-		log.Fatal(err)
+		return dns.Packet{}, err
 	}
 
-	reader, err := dns.NewPacketReader(responseBytes[:n])
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	response, err := dns.UnmarshalPacket(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, answer := range response.Answers {
-		if answer.Type == dns.RecordTypeA {
-			fmt.Printf(
-				"%s -> %v (ttl: %d)\n",
-				answer.Domain,
-				net.IP(answer.Data),
-				answer.Ttl,
-			)
-		}
-	}
+	return dns.UnmarshalPacket(responseBytes)
 }

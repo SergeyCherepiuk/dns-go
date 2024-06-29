@@ -18,7 +18,7 @@ var (
 	ErrIndexOutOfBound = errors.New("index out of bound")
 )
 
-func NewPacketWriter() *PacketWriter {
+func newPacketWriter() *PacketWriter {
 	return &PacketWriter{
 		buf:   make([]byte, 0),
 		pos:   0,

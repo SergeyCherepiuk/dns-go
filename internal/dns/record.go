@@ -1,5 +1,7 @@
 package dns
 
+import "fmt"
+
 type RecordType uint16
 
 const (
@@ -38,6 +40,13 @@ type Record struct {
 	Class  RecordClass
 	Ttl    uint32
 	Data   []byte
+}
+
+func (r Record) String() string {
+	return fmt.Sprintf(
+		"%s, %v, %v, %d, %v",
+		r.Domain, r.Type, r.Class, r.Ttl, r.Data,
+	)
 }
 
 func marshalRecord(w *PacketWriter, record Record) error {

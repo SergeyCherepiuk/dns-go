@@ -1,5 +1,7 @@
 package dns
 
+import "fmt"
+
 type QuestionType uint16
 
 const (
@@ -41,6 +43,10 @@ type Question struct {
 	Domain string
 	Type   QuestionType
 	Class  QuestionClass
+}
+
+func (q Question) String() string {
+	return fmt.Sprintf("%s, %v, %v", q.Domain, q.Type, q.Class)
 }
 
 func marshalQuestion(w *PacketWriter, question Question) error {
