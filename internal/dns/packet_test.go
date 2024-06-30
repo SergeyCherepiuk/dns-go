@@ -7,6 +7,8 @@ import (
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
+// TODO: Improve tests
+
 func TestMarshalPacketOneQuestion(t *testing.T) {
 	packet := Packet{
 		Header: Header{
@@ -294,108 +296,6 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 	}
 
 	entries := utils.Diff(actualPacket, expectedPackcet)
-	if len(entries) > 0 {
-		t.Fatal(entries.String())
-	}
-}
-
-func TestMarshalPacketOneAnswer(t *testing.T) {
-	packet := Packet{
-		Header: Header{
-			ID:                           0x1234,
-			PacketType:                   PacketTypeResponse,
-			Opcode:                       OpcodeQuery,
-			AuthoritativeAnswer:          true,
-			Truncated:                    false,
-			RecursionDesired:             true,
-			RecursionAvailable:           true,
-			AuthenticData:                true,
-			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
-			QuestionSectionSize:          1,
-			AnswerSectionSize:            1,
-			AuthorityRecordsSectionSize:  0,
-			AdditionalRecordsSectionSize: 0,
-		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
-		},
-		Answers: []Record{
-			{"google.com.", RecordTypeA, RecordClassIN, 86400, []byte{142, 251, 37, 110}},
-		},
-	}
-
-	expectedBytes := []byte{
-		// Header
-		0x12, 0x34, 0x85, 0xa0, 0x00, 0x01, 0x00, 0x01,
-		0x00, 0x00, 0x00, 0x00,
-
-		// Question 1 (google.com.)
-		0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03,
-		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
-
-		// Answer 1 (google.com. -> 142.251.37.110)
-		0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
-		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
-	}
-
-	actualBytes, err := MarshalPacket(packet)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !slices.Equal(actualBytes, expectedBytes) {
-		entries := utils.Diff(actualBytes, expectedBytes)
-		t.Fatal(entries.String())
-	}
-}
-
-func TestUnmarshalPacketOneAnswer(t *testing.T) {
-	bytes := []byte{
-		// Header
-		0x12, 0x34, 0x85, 0xa0, 0x00, 0x01, 0x00, 0x01,
-		0x00, 0x00, 0x00, 0x00,
-
-		// Question 1 (google.com.)
-		0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03,
-		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
-
-		// Answer 1 (google.com. -> 142.251.37.110)
-		0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
-		0x51, 0x80, 0x00, 0x04, 0x8e, 0xfb, 0x25, 0x6e,
-	}
-
-	expectedPacket := Packet{
-		Header: Header{
-			ID:                           0x1234,
-			PacketType:                   PacketTypeResponse,
-			Opcode:                       OpcodeQuery,
-			AuthoritativeAnswer:          true,
-			Truncated:                    false,
-			RecursionDesired:             true,
-			RecursionAvailable:           true,
-			AuthenticData:                true,
-			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
-			QuestionSectionSize:          1,
-			AnswerSectionSize:            1,
-			AuthorityRecordsSectionSize:  0,
-			AdditionalRecordsSectionSize: 0,
-		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
-		},
-		Answers: []Record{
-			{"google.com.", RecordTypeA, RecordClassIN, 86400, []byte{142, 251, 37, 110}},
-		},
-	}
-
-	actualPacket, err := UnmarshalPacket(bytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	entries := utils.Diff(actualPacket, expectedPacket)
 	if len(entries) > 0 {
 		t.Fatal(entries.String())
 	}

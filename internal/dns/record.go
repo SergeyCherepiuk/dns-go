@@ -1,45 +1,30 @@
 package dns
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+)
 
 type RecordType uint16
 
 const (
-	_ = RecordType(iota)
-	RecordTypeA
-	RecordTypeNS
-	RecordTypeMD
-	RecordTypeMF
-	RecordTypeCNAME
-	RecordTypeSOA
-	RecordTypeMB
-	RecordTypeMG
-	RecordTypeMR
-	RecordTypeNULL
-	RecordTypeWKS
-	RecordTypePTR
-	RecordTypeHINFO
-	RecordTypeMINFO
-	RecordTypeMX
-	RecordTypeTXT
+	RecordTypeA     = RecordType(1)
+	RecordTypeNS    = RecordType(2)
+	RecordTypeCNAME = RecordType(5)
+	RecordTypeMX    = RecordType(15)
+	RecordTypeAAAA  = RecordType(28)
 )
 
 type RecordClass uint16
 
-const (
-	_ = RecordClass(iota)
-	RecordClassIN
-	RecordClassCS
-	RecordClassCH
-	RecordClassHS
-)
+const RecordClassIN = RecordClass(1)
 
 type Record struct {
 	Domain string
 	Type   RecordType
 	Class  RecordClass
 	Ttl    uint32
-	Data   []byte
+	Data   any
 }
 
 func (r Record) String() string {
@@ -70,14 +55,27 @@ func marshalRecord(w *PacketWriter, record Record) error {
 		return err
 	}
 
-	err = w.WriteUint16(uint16(len(record.Data)))
-	if err != nil {
-		return err
-	}
+	switch record.Type {
+	case RecordTypeA, RecordTypeAAAA:
+		bytes := []byte(record.Data.(net.IP))
 
-	err = w.WriteBytes(record.Data)
-	if err != nil {
-		return err
+		err = w.WriteUint16(uint16(len(bytes)))
+		if err != nil {
+			return err
+		}
+
+		err = w.WriteBytes(bytes)
+		if err != nil {
+			return err
+		}
+
+	case RecordTypeNS, RecordTypeCNAME:
+		domain := record.Data.(string)
+
+		err = w.WriteDomain(domain)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -104,22 +102,32 @@ func unmarshalRecord(r *PacketReader) (Record, error) {
 		return Record{}, err
 	}
 
-	length, err := r.ReadUint16()
-	if err != nil {
-		return Record{}, err
-	}
-
-	data, err := r.ReadBytes(int(length))
-	if err != nil {
-		return Record{}, err
-	}
-
 	record := Record{
 		Domain: domain,
 		Type:   RecordType(recordType),
 		Class:  RecordClass(recordClass),
 		Ttl:    ttl,
-		Data:   data,
+	}
+
+	length, err := r.ReadUint16()
+	if err != nil {
+		return Record{}, err
+	}
+
+	switch record.Type {
+	case RecordTypeA, RecordTypeAAAA:
+		ip, err := r.ReadBytes(int(length))
+		if err != nil {
+			return Record{}, err
+		}
+
+		record.Data = net.IP(ip)
+
+	case RecordTypeNS, RecordTypeCNAME:
+		record.Data, err = r.ReadDomain()
+		if err != nil {
+			return Record{}, err
+		}
 	}
 
 	return record, nil

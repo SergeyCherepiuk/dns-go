@@ -35,6 +35,16 @@ func (p Packet) String() string {
 		bytes = append(bytes, '\n')
 	}
 
+	for _, authorityRecord := range p.AuthorityRecords {
+		bytes = append(bytes, authorityRecord.String()...)
+		bytes = append(bytes, '\n')
+	}
+
+	for _, additionalRecord := range p.AdditionalRecords {
+		bytes = append(bytes, additionalRecord.String()...)
+		bytes = append(bytes, '\n')
+	}
+
 	return string(bytes)
 }
 
