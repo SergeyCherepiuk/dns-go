@@ -31,6 +31,7 @@ var (
 
 func Lookup(query Packet) (Packet, error) {
 	var (
+		initialDomain   = query.Questions[0].Domain
 		rootServerIndex = rand.Intn(len(RootServers))
 		rootServerIP    = RootServers[rootServerIndex]
 		addr            = net.UDPAddr{IP: rootServerIP, Port: 53}
@@ -42,7 +43,20 @@ func Lookup(query Packet) (Packet, error) {
 			return Packet{}, err
 		}
 
-		if hasIPv4(response) {
+		if _, ok := getIPv4(response); ok {
+			return response, nil
+		}
+
+		cname, ok := getCanonicalName(response, initialDomain)
+		if ok {
+			cnameQuery := constructCnameQuery(cname)
+			cnameResponse, err := Lookup(cnameQuery)
+			if err != nil {
+				return Packet{}, err
+			}
+
+			response.Answers = append(response.Answers, cnameResponse.Answers...)
+			response.Header.AnswerSectionSize += cnameResponse.Header.AnswerSectionSize
 			return response, nil
 		}
 
@@ -90,22 +104,22 @@ func sendQuery(query Packet, addr net.UDPAddr) (Packet, error) {
 	return UnmarshalPacket(responseBytes)
 }
 
-func hasIPv4(response Packet) bool {
+func getCanonicalName(response Packet, domain string) (string, bool) {
 	for _, answer := range response.Answers {
-		if answer.Type == RecordTypeA {
-			return true
+		if answer.Type == RecordTypeCNAME && answer.Domain == domain {
+			return answer.Data.(string), true
 		}
 	}
-	return false
+	return "", false
 }
 
-func getIPv4(response Packet) net.IP {
+func getIPv4(response Packet) (net.IP, bool) {
 	for _, answer := range response.Answers {
 		if answer.Type == RecordTypeA {
-			return answer.Data.(net.IP)
+			return answer.Data.(net.IP), true
 		}
 	}
-	return nil
+	return nil, false
 }
 
 func pickNameServer(response Packet) (string, error) {
@@ -148,10 +162,28 @@ func resolveNameServer(host string, response Packet) (net.IP, error) {
 		return nil, err
 	}
 
-	ip := getIPv4(hostResponse)
-	if ip == nil {
+	ip, ok := getIPv4(hostResponse)
+	if !ok {
 		return nil, ErrUnableToResolve
 	}
 
 	return ip, nil
+}
+
+func constructCnameQuery(cname string) Packet {
+	return Packet{
+		Header: Header{
+			ID:                  uint16(rand.Intn(math.MaxUint16)),
+			PacketType:          PacketTypeQuery,
+			Opcode:              OpcodeQuery,
+			QuestionSectionSize: 1,
+		},
+		Questions: []Question{
+			{
+				Domain: cname,
+				Type:   QuestionTypeA,
+				Class:  QuestionClassIN,
+			},
+		},
+	}
 }
