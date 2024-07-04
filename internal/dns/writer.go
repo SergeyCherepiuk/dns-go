@@ -68,7 +68,7 @@ func (w *PacketWriter) WriteBytes(bytes []byte) error {
 	return nil
 }
 
-func (w *PacketWriter) WriteDomain(domain string) error {
+func (w *PacketWriter) formatDomain(domain string) []byte {
 	var bytes []byte
 
 	subdomains := strings.Split(domain, ".")
@@ -77,14 +77,10 @@ func (w *PacketWriter) WriteDomain(domain string) error {
 
 		pointer, ok := utils.KeyByValue(w.cache, joined)
 		if ok {
-			pointerBytes := utils.Uint16ToBytes(uint16(pointer))
+			pointerWithPrefix := pointer | 0b11000000_00000000
+			pointerBytes := utils.Uint16ToBytes(uint16(pointerWithPrefix))
 			bytes = append(bytes, pointerBytes[:]...)
 			break
-		}
-
-		if joined != "" {
-			pointer := (len(domain) - len(joined) + w.pos) | 0b11000000_00000000
-			w.cache[pointer] = joined
 		}
 
 		size := byte(len(subdomain))
@@ -92,6 +88,43 @@ func (w *PacketWriter) WriteDomain(domain string) error {
 		bytes = append(bytes, subdomain...)
 	}
 
+	return bytes
+}
+
+func (w *PacketWriter) cacheDomain(domain string) {
+	initialDomainLength := len(domain)
+
+	for {
+		if domain != "" {
+			pointer := initialDomainLength - len(domain) + w.pos
+			w.cache[pointer] = domain
+		}
+
+		index := strings.Index(domain, ".")
+		if index == -1 {
+			break
+		}
+
+		domain = domain[index+1:]
+	}
+}
+
+func (w *PacketWriter) WriteDomain(domain string) error {
+	bytes := w.formatDomain(domain)
+	w.cacheDomain(domain)
+	return w.WriteBytes(bytes)
+}
+
+func (w *PacketWriter) WriteDomainWithLength(domain string) error {
+	bytes := w.formatDomain(domain)
+
+	length := uint16(len(bytes))
+	err := w.WriteUint16(length)
+	if err != nil {
+		return err
+	}
+
+	w.cacheDomain(domain)
 	return w.WriteBytes(bytes)
 }
 

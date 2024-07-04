@@ -72,7 +72,7 @@ func marshalRecord(w *PacketWriter, record Record) error {
 	case RecordTypeNS, RecordTypeCNAME:
 		domain := record.Data.(string)
 
-		err = w.WriteDomain(domain)
+		err = w.WriteDomainWithLength(domain)
 		if err != nil {
 			return err
 		}
