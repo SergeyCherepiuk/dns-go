@@ -43,13 +43,17 @@ func Lookup(query Packet) (Packet, error) {
 			return Packet{}, err
 		}
 
-		if _, ok := getIPv4(response); ok {
+		if response.Header.ResponseCode != ResponseCodeNoError {
 			return response, nil
 		}
 
-		cname, ok := getCanonicalName(response, initialDomain)
+		if _, ok := getIPv4(response.Answers, initialDomain); ok {
+			return response, nil
+		}
+
+		cname, ok := getCname(response.Answers, initialDomain)
 		if ok {
-			cnameQuery := constructCnameQuery(cname)
+			cnameQuery := constructQuery(cname)
 			cnameResponse, err := Lookup(cnameQuery)
 			if err != nil {
 				return Packet{}, err
@@ -60,14 +64,25 @@ func Lookup(query Packet) (Packet, error) {
 			return response, nil
 		}
 
-		host, err := pickNameServer(response)
+		host, ok := pickNameServer(response.AuthorityRecords)
+		if !ok {
+			return Packet{}, ErrUnableToResolve
+		}
+
+		addr.IP, ok = resolveNameServer(response.AdditionalRecords, host)
+		if ok {
+			continue
+		}
+
+		nsQuery := constructQuery(host)
+		hostResponse, err := Lookup(nsQuery)
 		if err != nil {
 			return Packet{}, err
 		}
 
-		addr.IP, err = resolveNameServer(host, response)
-		if err != nil {
-			return Packet{}, err
+		addr.IP, ok = getIPv4(hostResponse.Answers, host)
+		if !ok {
+			return Packet{}, ErrUnableToResolve
 		}
 	}
 }
@@ -104,73 +119,45 @@ func sendQuery(query Packet, addr net.UDPAddr) (Packet, error) {
 	return UnmarshalPacket(responseBytes)
 }
 
-func getCanonicalName(response Packet, domain string) (string, bool) {
-	for _, answer := range response.Answers {
-		if answer.Type == RecordTypeCNAME && answer.Domain == domain {
-			return answer.Data.(string), true
-		}
-	}
-	return "", false
-}
-
-func getIPv4(response Packet) (net.IP, bool) {
-	for _, answer := range response.Answers {
-		if answer.Type == RecordTypeA {
-			return answer.Data.(net.IP), true
+func getIPv4(records []Record, domain string) (net.IP, bool) {
+	for _, record := range records {
+		if record.Type == RecordTypeA && record.Domain == domain {
+			return record.Data.(net.IP), true
 		}
 	}
 	return nil, false
 }
 
-func pickNameServer(response Packet) (string, error) {
-	for _, authorityRecord := range response.AuthorityRecords {
-		if authorityRecord.Type == RecordTypeNS {
-			host := authorityRecord.Data.(string)
-			return host, nil
+func getCname(records []Record, domain string) (string, bool) {
+	for _, record := range records {
+		if record.Type == RecordTypeCNAME && record.Domain == domain {
+			return record.Data.(string), true
 		}
 	}
-	return "", ErrUnableToResolve
+	return "", false
 }
 
-func resolveNameServer(host string, response Packet) (net.IP, error) {
-	for _, additionalRecord := range response.AdditionalRecords {
-		if additionalRecord.Type == RecordTypeA && additionalRecord.Domain == host {
-			ip := additionalRecord.Data.(net.IP)
-			return ip, nil
+func pickNameServer(records []Record) (string, bool) {
+	for _, record := range records {
+		if record.Type == RecordTypeNS {
+			host := record.Data.(string)
+			return host, true
 		}
 	}
-
-	hostQuery := Packet{
-		Header: Header{
-			ID:                  uint16(rand.Intn(math.MaxUint16)),
-			PacketType:          PacketTypeQuery,
-			Opcode:              OpcodeQuery,
-			RecursionDesired:    true,
-			QuestionSectionSize: 1,
-		},
-		Questions: []Question{
-			{
-				Domain: host,
-				Type:   QuestionTypeA,
-				Class:  QuestionClassIN,
-			},
-		},
-	}
-
-	hostResponse, err := Lookup(hostQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	ip, ok := getIPv4(hostResponse)
-	if !ok {
-		return nil, ErrUnableToResolve
-	}
-
-	return ip, nil
+	return "", false
 }
 
-func constructCnameQuery(cname string) Packet {
+func resolveNameServer(records []Record, host string) (net.IP, bool) {
+	for _, record := range records {
+		if record.Type == RecordTypeA && record.Domain == host {
+			ip := record.Data.(net.IP)
+			return ip, true
+		}
+	}
+	return nil, false
+}
+
+func constructQuery(domain string) Packet {
 	return Packet{
 		Header: Header{
 			ID:                  uint16(rand.Intn(math.MaxUint16)),
@@ -180,7 +167,7 @@ func constructCnameQuery(cname string) Packet {
 		},
 		Questions: []Question{
 			{
-				Domain: cname,
+				Domain: domain,
 				Type:   QuestionTypeA,
 				Class:  QuestionClassIN,
 			},
