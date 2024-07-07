@@ -96,7 +96,8 @@ func (w *PacketWriter) cacheDomain(domain string) {
 	initialDomainLength := len(domain)
 
 	for {
-		if domain != "" {
+		_, ok := utils.KeyByValue(w.cache, domain)
+		if domain != "" && !ok {
 			pointer := initialDomainLength - len(domain) + w.pos
 			w.cache[pointer] = domain
 		}
