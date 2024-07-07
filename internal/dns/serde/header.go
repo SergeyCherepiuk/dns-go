@@ -1,55 +1,12 @@
-package dns
+package serde
 
 import (
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/io"
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/types"
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
-const HeaderSize = 12
-
-type PacketType uint8
-
-const (
-	PacketTypeQuery PacketType = iota
-	PacketTypeResponse
-)
-
-type Opcode uint8
-
-const (
-	OpcodeQuery Opcode = iota
-	OpcodeIQuery
-	OpcodeStatus
-)
-
-type ResponseCode uint8
-
-const (
-	ResponseCodeNoError ResponseCode = iota
-	ResponseCodeFormatError
-	ResponseCodeServerFailure
-	ResponseCodeNameError
-	ResponseCodeNotImplemented
-	ResponseCodeRefused
-)
-
-type Header struct {
-	ID                           uint16
-	PacketType                   PacketType
-	Opcode                       Opcode
-	AuthoritativeAnswer          bool
-	Truncated                    bool
-	RecursionDesired             bool
-	RecursionAvailable           bool
-	AuthenticData                bool
-	CheckingDisabled             bool
-	ResponseCode                 ResponseCode
-	QuestionSectionSize          uint16
-	AnswerSectionSize            uint16
-	AuthorityRecordsSectionSize  uint16
-	AdditionalRecordsSectionSize uint16
-}
-
-func marshalHeader(w *PacketWriter, header Header) error {
+func marshalHeader(w *io.PacketWriter, header types.Header) error {
 	var (
 		packetTypeBit          = uint16(header.PacketType) << 15
 		opcodeBits             = uint16(header.Opcode) << 11
@@ -86,10 +43,10 @@ func marshalHeader(w *PacketWriter, header Header) error {
 	return w.WriteBytes(bytes)
 }
 
-func unmarshalHeader(r *PacketReader) (Header, error) {
-	bytes, err := r.ReadBytes(HeaderSize)
+func unmarshalHeader(r *io.PacketReader) (types.Header, error) {
+	bytes, err := r.ReadBytes(types.HeaderSize)
 	if err != nil {
-		return Header{}, err
+		return types.Header{}, err
 	}
 
 	var (
@@ -104,17 +61,17 @@ func unmarshalHeader(r *PacketReader) (Header, error) {
 		responseCodeBits       = (bytes[3] >> 0) & 0b00001111
 	)
 
-	header := Header{
+	header := types.Header{
 		ID:                           utils.BytesToUint16([2]byte(bytes[0:2])),
-		PacketType:                   PacketType(packetTypeBit),
-		Opcode:                       Opcode(opcodeBits),
+		PacketType:                   types.PacketType(packetTypeBit),
+		Opcode:                       types.Opcode(opcodeBits),
 		AuthoritativeAnswer:          authoritativeAnswerBit == 1,
 		Truncated:                    truncatedBit == 1,
 		RecursionDesired:             recursionDesiredBit == 1,
 		RecursionAvailable:           recursionAvailableBit == 1,
 		AuthenticData:                authenticDataBit == 1,
 		CheckingDisabled:             chekingDisabledBit == 1,
-		ResponseCode:                 ResponseCode(responseCodeBits),
+		ResponseCode:                 types.ResponseCode(responseCodeBits),
 		QuestionSectionSize:          utils.BytesToUint16([2]byte(bytes[4:6])),
 		AnswerSectionSize:            utils.BytesToUint16([2]byte(bytes[6:8])),
 		AuthorityRecordsSectionSize:  utils.BytesToUint16([2]byte(bytes[8:10])),

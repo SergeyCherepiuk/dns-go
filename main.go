@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/SergeyCherepiuk/dns-go/internal/dns"
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/serde"
 )
 
 func main() {
@@ -37,7 +38,7 @@ func handleConnection(conn *net.UDPConn) error {
 		return err
 	}
 
-	query, err := dns.UnmarshalPacket(buf[:n])
+	query, err := serde.UnmarshalPacket(buf[:n])
 	if err != nil {
 		return err
 	}
@@ -51,7 +52,7 @@ func handleConnection(conn *net.UDPConn) error {
 
 	fmt.Println(response.String())
 
-	responseBytes, err := dns.MarshalPacket(response)
+	responseBytes, err := serde.MarshalPacket(response)
 	if err != nil {
 		return err
 	}

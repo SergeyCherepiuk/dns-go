@@ -6,6 +6,9 @@ import (
 	"math"
 	"math/rand"
 	"net"
+
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/serde"
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/types"
 )
 
 var RootServers = [13]net.IP{
@@ -29,7 +32,7 @@ var (
 	ErrInvalidRecordType = errors.New("invalid record type")
 )
 
-func Lookup(query Packet) (Packet, error) {
+func Lookup(query types.Packet) (types.Packet, error) {
 	var (
 		initialDomain   = query.Questions[0].Domain
 		rootServerIndex = rand.Intn(len(RootServers))
@@ -40,10 +43,10 @@ func Lookup(query Packet) (Packet, error) {
 	for {
 		response, err := sendQuery(query, addr)
 		if err != nil {
-			return Packet{}, err
+			return types.Packet{}, err
 		}
 
-		if response.Header.ResponseCode != ResponseCodeNoError {
+		if response.Header.ResponseCode != types.ResponseCodeNoError {
 			return response, nil
 		}
 
@@ -56,7 +59,7 @@ func Lookup(query Packet) (Packet, error) {
 			cnameQuery := constructQuery(cname)
 			cnameResponse, err := Lookup(cnameQuery)
 			if err != nil {
-				return Packet{}, err
+				return types.Packet{}, err
 			}
 
 			response.Answers = append(response.Answers, cnameResponse.Answers...)
@@ -66,7 +69,7 @@ func Lookup(query Packet) (Packet, error) {
 
 		host, ok := pickNameServer(response.AuthorityRecords)
 		if !ok {
-			return Packet{}, ErrUnableToResolve
+			return types.Packet{}, ErrUnableToResolve
 		}
 
 		addr.IP, ok = resolveNameServer(response.AdditionalRecords, host)
@@ -77,69 +80,69 @@ func Lookup(query Packet) (Packet, error) {
 		nsQuery := constructQuery(host)
 		hostResponse, err := Lookup(nsQuery)
 		if err != nil {
-			return Packet{}, err
+			return types.Packet{}, err
 		}
 
 		addr.IP, ok = getIPv4(hostResponse.Answers, host)
 		if !ok {
-			return Packet{}, ErrUnableToResolve
+			return types.Packet{}, ErrUnableToResolve
 		}
 	}
 }
 
-func sendQuery(query Packet, addr net.UDPAddr) (Packet, error) {
+func sendQuery(query types.Packet, addr net.UDPAddr) (types.Packet, error) {
 	localAddr := net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}
 
 	conn, err := net.DialUDP("udp", &localAddr, &addr)
 	if err != nil {
-		return Packet{}, err
+		return types.Packet{}, err
 	}
 
-	queryBytes, err := MarshalPacket(query)
+	queryBytes, err := serde.MarshalPacket(query)
 	if err != nil {
-		return Packet{}, err
+		return types.Packet{}, err
 	}
 
 	n, err := conn.Write(queryBytes)
 	if err != nil {
-		return Packet{}, err
+		return types.Packet{}, err
 	}
 
 	if n != len(queryBytes) {
 		err = fmt.Errorf("unread bytes (server read %d out of %d)", n, len(queryBytes))
-		return Packet{}, err
+		return types.Packet{}, err
 	}
 
 	responseBytes := make([]byte, 512)
 	n, err = conn.Read(responseBytes)
 	if err != nil {
-		return Packet{}, err
+		return types.Packet{}, err
 	}
 
-	return UnmarshalPacket(responseBytes)
+	return serde.UnmarshalPacket(responseBytes)
 }
 
-func getIPv4(records []Record, domain string) (net.IP, bool) {
+func getIPv4(records []types.Record, domain string) (net.IP, bool) {
 	for _, record := range records {
-		if record.Type == RecordTypeA && record.Domain == domain {
+		if record.Type == types.RecordTypeA && record.Domain == domain {
 			return record.Data.(net.IP), true
 		}
 	}
 	return nil, false
 }
 
-func getCname(records []Record, domain string) (string, bool) {
+func getCname(records []types.Record, domain string) (string, bool) {
 	for _, record := range records {
-		if record.Type == RecordTypeCNAME && record.Domain == domain {
+		if record.Type == types.RecordTypeCNAME && record.Domain == domain {
 			return record.Data.(string), true
 		}
 	}
 	return "", false
 }
 
-func pickNameServer(records []Record) (string, bool) {
+func pickNameServer(records []types.Record) (string, bool) {
 	for _, record := range records {
-		if record.Type == RecordTypeNS {
+		if record.Type == types.RecordTypeNS {
 			host := record.Data.(string)
 			return host, true
 		}
@@ -147,9 +150,9 @@ func pickNameServer(records []Record) (string, bool) {
 	return "", false
 }
 
-func resolveNameServer(records []Record, host string) (net.IP, bool) {
+func resolveNameServer(records []types.Record, host string) (net.IP, bool) {
 	for _, record := range records {
-		if record.Type == RecordTypeA && record.Domain == host {
+		if record.Type == types.RecordTypeA && record.Domain == host {
 			ip := record.Data.(net.IP)
 			return ip, true
 		}
@@ -157,19 +160,19 @@ func resolveNameServer(records []Record, host string) (net.IP, bool) {
 	return nil, false
 }
 
-func constructQuery(domain string) Packet {
-	return Packet{
-		Header: Header{
+func constructQuery(domain string) types.Packet {
+	return types.Packet{
+		Header: types.Header{
 			ID:                  uint16(rand.Intn(math.MaxUint16)),
-			PacketType:          PacketTypeQuery,
-			Opcode:              OpcodeQuery,
+			PacketType:          types.PacketTypeQuery,
+			Opcode:              types.OpcodeQuery,
 			QuestionSectionSize: 1,
 		},
-		Questions: []Question{
+		Questions: []types.Question{
 			{
 				Domain: domain,
-				Type:   QuestionTypeA,
-				Class:  QuestionClassIN,
+				Type:   types.QuestionTypeA,
+				Class:  types.QuestionClassIN,
 			},
 		},
 	}

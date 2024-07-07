@@ -1,9 +1,10 @@
-package dns
+package io
 
 import (
 	"errors"
 	"strings"
 
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/types"
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
@@ -18,7 +19,7 @@ var (
 	ErrIndexOutOfBound = errors.New("index out of bound")
 )
 
-func newPacketWriter() *PacketWriter {
+func NewPacketWriter() *PacketWriter {
 	return &PacketWriter{
 		buf:   make([]byte, 0),
 		pos:   0,
@@ -27,7 +28,7 @@ func newPacketWriter() *PacketWriter {
 }
 
 func (w *PacketWriter) WriteUint16(uint16 uint16) error {
-	if MaxPacketSize < w.pos+2 {
+	if types.MaxPacketSize < w.pos+2 {
 		return ErrTooManyBytes
 	}
 
@@ -38,7 +39,7 @@ func (w *PacketWriter) WriteUint16(uint16 uint16) error {
 }
 
 func (w *PacketWriter) WriteUint32(uint32 uint32) error {
-	if MaxPacketSize < w.pos+4 {
+	if types.MaxPacketSize < w.pos+4 {
 		return ErrTooManyBytes
 	}
 
@@ -49,7 +50,7 @@ func (w *PacketWriter) WriteUint32(uint32 uint32) error {
 }
 
 func (w *PacketWriter) WriteByte(byte byte) error {
-	if MaxPacketSize < w.pos+1 {
+	if types.MaxPacketSize < w.pos+1 {
 		return ErrTooManyBytes
 	}
 
@@ -59,7 +60,7 @@ func (w *PacketWriter) WriteByte(byte byte) error {
 }
 
 func (w *PacketWriter) WriteBytes(bytes []byte) error {
-	if MaxPacketSize < w.pos+len(bytes) {
+	if types.MaxPacketSize < w.pos+len(bytes) {
 		return ErrTooManyBytes
 	}
 

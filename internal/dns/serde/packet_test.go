@@ -1,34 +1,35 @@
-package dns
+package serde
 
 import (
 	"slices"
 	"testing"
 
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/types"
 	"github.com/SergeyCherepiuk/dns-go/internal/utils"
 )
 
 // TODO: Improve tests
 
 func TestMarshalPacketOneQuestion(t *testing.T) {
-	packet := Packet{
-		Header: Header{
+	packet := types.Packet{
+		Header: types.Header{
 			ID:                           0x1234,
-			PacketType:                   PacketTypeQuery,
-			Opcode:                       OpcodeQuery,
+			PacketType:                   types.PacketTypeQuery,
+			Opcode:                       types.OpcodeQuery,
 			AuthoritativeAnswer:          false,
 			Truncated:                    false,
 			RecursionDesired:             true,
 			RecursionAvailable:           false,
 			AuthenticData:                true,
 			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
+			ResponseCode:                 types.ResponseCodeNoError,
 			QuestionSectionSize:          1,
 			AnswerSectionSize:            0,
 			AuthorityRecordsSectionSize:  0,
 			AdditionalRecordsSectionSize: 0,
 		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
+		Questions: []types.Question{
+			{Domain: "google.com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
 		},
 	}
 
@@ -54,26 +55,26 @@ func TestMarshalPacketOneQuestion(t *testing.T) {
 }
 
 func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
-	packet := Packet{
-		Header: Header{
+	packet := types.Packet{
+		Header: types.Header{
 			ID:                           0x1234,
-			PacketType:                   PacketTypeQuery,
-			Opcode:                       OpcodeQuery,
+			PacketType:                   types.PacketTypeQuery,
+			Opcode:                       types.OpcodeQuery,
 			AuthoritativeAnswer:          false,
 			Truncated:                    false,
 			RecursionDesired:             true,
 			RecursionAvailable:           false,
 			AuthenticData:                true,
 			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
+			ResponseCode:                 types.ResponseCodeNoError,
 			QuestionSectionSize:          2,
 			AnswerSectionSize:            0,
 			AuthorityRecordsSectionSize:  0,
 			AdditionalRecordsSectionSize: 0,
 		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
-			{"mx.google.com.", QuestionTypeMX, QuestionClassIN},
+		Questions: []types.Question{
+			{Domain: "google.com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
+			{Domain: "mx.google.com.", Type: types.QuestionTypeMX, Class: types.QuestionClassIN},
 		},
 	}
 
@@ -103,27 +104,27 @@ func TestMarshalQueryPacketTwoQuestions(t *testing.T) {
 }
 
 func TestMarshalQueryPacketThreeQuestions(t *testing.T) {
-	packet := Packet{
-		Header: Header{
+	packet := types.Packet{
+		Header: types.Header{
 			ID:                           0x1234,
-			PacketType:                   PacketTypeQuery,
-			Opcode:                       OpcodeQuery,
+			PacketType:                   types.PacketTypeQuery,
+			Opcode:                       types.OpcodeQuery,
 			AuthoritativeAnswer:          false,
 			Truncated:                    false,
 			RecursionDesired:             true,
 			RecursionAvailable:           false,
 			AuthenticData:                true,
 			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
+			ResponseCode:                 types.ResponseCodeNoError,
 			QuestionSectionSize:          3,
 			AnswerSectionSize:            0,
 			AuthorityRecordsSectionSize:  0,
 			AdditionalRecordsSectionSize: 0,
 		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
-			{"mx.google.com.", QuestionTypeMX, QuestionClassIN},
-			{"com.", QuestionTypeA, QuestionClassIN},
+		Questions: []types.Question{
+			{Domain: "google.com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
+			{Domain: "mx.google.com.", Type: types.QuestionTypeMX, Class: types.QuestionClassIN},
+			{Domain: "com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
 		},
 	}
 
@@ -166,25 +167,25 @@ func TestUnmarshalQueryPacketOneQuestion(t *testing.T) {
 		0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	expectedPackcet := Packet{
-		Header: Header{
+	expectedPackcet := types.Packet{
+		Header: types.Header{
 			ID:                           0x1234,
-			PacketType:                   PacketTypeQuery,
-			Opcode:                       OpcodeQuery,
+			PacketType:                   types.PacketTypeQuery,
+			Opcode:                       types.OpcodeQuery,
 			AuthoritativeAnswer:          false,
 			Truncated:                    false,
 			RecursionDesired:             true,
 			RecursionAvailable:           false,
 			AuthenticData:                true,
 			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
+			ResponseCode:                 types.ResponseCodeNoError,
 			QuestionSectionSize:          1,
 			AnswerSectionSize:            0,
 			AuthorityRecordsSectionSize:  0,
 			AdditionalRecordsSectionSize: 0,
 		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
+		Questions: []types.Question{
+			{Domain: "google.com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
 		},
 	}
 
@@ -214,26 +215,26 @@ func TestUnmarshalQueryPacketTwoQuestions(t *testing.T) {
 		0x01,
 	}
 
-	expectedPackcet := Packet{
-		Header: Header{
+	expectedPackcet := types.Packet{
+		Header: types.Header{
 			ID:                           0x1234,
-			PacketType:                   PacketTypeQuery,
-			Opcode:                       OpcodeQuery,
+			PacketType:                   types.PacketTypeQuery,
+			Opcode:                       types.OpcodeQuery,
 			AuthoritativeAnswer:          false,
 			Truncated:                    false,
 			RecursionDesired:             true,
 			RecursionAvailable:           false,
 			AuthenticData:                true,
 			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
+			ResponseCode:                 types.ResponseCodeNoError,
 			QuestionSectionSize:          2,
 			AnswerSectionSize:            0,
 			AuthorityRecordsSectionSize:  0,
 			AdditionalRecordsSectionSize: 0,
 		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
-			{"mx.google.com.", QuestionTypeMX, QuestionClassIN},
+		Questions: []types.Question{
+			{Domain: "google.com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
+			{Domain: "mx.google.com.", Type: types.QuestionTypeMX, Class: types.QuestionClassIN},
 		},
 	}
 
@@ -266,27 +267,27 @@ func TestUnmarshalQueryPacketThreeQuestions(t *testing.T) {
 		0xc0, 0x13, 0x00, 0x01, 0x00, 0x01,
 	}
 
-	expectedPackcet := Packet{
-		Header: Header{
+	expectedPackcet := types.Packet{
+		Header: types.Header{
 			ID:                           0x1234,
-			PacketType:                   PacketTypeQuery,
-			Opcode:                       OpcodeQuery,
+			PacketType:                   types.PacketTypeQuery,
+			Opcode:                       types.OpcodeQuery,
 			AuthoritativeAnswer:          false,
 			Truncated:                    false,
 			RecursionDesired:             true,
 			RecursionAvailable:           false,
 			AuthenticData:                true,
 			CheckingDisabled:             false,
-			ResponseCode:                 ResponseCodeNoError,
+			ResponseCode:                 types.ResponseCodeNoError,
 			QuestionSectionSize:          3,
 			AnswerSectionSize:            0,
 			AuthorityRecordsSectionSize:  0,
 			AdditionalRecordsSectionSize: 0,
 		},
-		Questions: []Question{
-			{"google.com.", QuestionTypeA, QuestionClassIN},
-			{"mx.google.com.", QuestionTypeMX, QuestionClassIN},
-			{"com.", QuestionTypeA, QuestionClassIN},
+		Questions: []types.Question{
+			{Domain: "google.com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
+			{Domain: "mx.google.com.", Type: types.QuestionTypeMX, Class: types.QuestionClassIN},
+			{Domain: "com.", Type: types.QuestionTypeA, Class: types.QuestionClassIN},
 		},
 	}
 
