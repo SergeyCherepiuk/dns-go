@@ -54,7 +54,7 @@ func handleConnection(conn *net.UDPConn, cache *dnsCache) error {
 			answers = response.Answers
 			ttl     = time.Duration(response.Answers[0].Ttl) * time.Second
 		)
-		cache.set(domain, answers, ttl)
+		go cache.set(domain, answers, ttl)
 	}
 
 	fmt.Println(response.String())
