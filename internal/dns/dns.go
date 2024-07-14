@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 
+	"github.com/SergeyCherepiuk/dns-go/internal/dns/cache"
 	"github.com/SergeyCherepiuk/dns-go/internal/dns/serde"
 	"github.com/SergeyCherepiuk/dns-go/internal/dns/types"
 )
@@ -32,7 +33,7 @@ var (
 	ErrInvalidRecordType = errors.New("invalid record type")
 )
 
-func Lookup(query types.Packet) (types.Packet, error) {
+func Lookup(query types.Packet, cache *cache.DnsCache) (types.Packet, error) {
 	var (
 		initialDomain   = query.Questions[0].Domain
 		rootServerIndex = rand.Intn(len(RootServers))
@@ -41,49 +42,62 @@ func Lookup(query types.Packet) (types.Packet, error) {
 	)
 
 	for {
-		response, err := sendQuery(query, addr)
-		if err != nil {
-			return types.Packet{}, err
+		var (
+			response types.Packet
+			err      error
+		)
+
+		cacheDomain := query.Questions[0].Domain
+		packetRecords, ok := cache.Get(cacheDomain, addr.IP)
+		if ok {
+			response = constructResponse(query, packetRecords)
+		} else {
+			response, err = sendQuery(query, addr)
+			if err != nil {
+				return types.Packet{}, err
+			}
+
+			cache.Set(cacheDomain, addr.IP, response.Records)
 		}
 
 		if response.Header.ResponseCode != types.ResponseCodeNoError {
 			return response, nil
 		}
 
-		if _, ok := getIPv4(response.Answers, initialDomain); ok {
+		if _, ok := getIPv4(response.Records.Answers, initialDomain); ok {
 			return response, nil
 		}
 
-		cname, ok := getCname(response.Answers, initialDomain)
+		cname, ok := getCname(response.Records.Answers, initialDomain)
 		if ok {
 			cnameQuery := constructQuery(cname)
-			cnameResponse, err := Lookup(cnameQuery)
+			cnameResponse, err := Lookup(cnameQuery, cache)
 			if err != nil {
 				return types.Packet{}, err
 			}
 
-			response.Answers = append(response.Answers, cnameResponse.Answers...)
+			response.Records.Answers = append(response.Records.Answers, cnameResponse.Records.Answers...)
 			response.Header.AnswerSectionSize += cnameResponse.Header.AnswerSectionSize
 			return response, nil
 		}
 
-		host, ok := pickNameServer(response.AuthorityRecords)
+		host, ok := pickNameServer(response.Records.AuthorityRecords)
 		if !ok {
 			return types.Packet{}, ErrUnableToResolve
 		}
 
-		addr.IP, ok = resolveNameServer(response.AdditionalRecords, host)
+		addr.IP, ok = resolveNameServer(response.Records.AdditionalRecords, host)
 		if ok {
 			continue
 		}
 
 		nsQuery := constructQuery(host)
-		hostResponse, err := Lookup(nsQuery)
+		hostResponse, err := Lookup(nsQuery, cache)
 		if err != nil {
 			return types.Packet{}, err
 		}
 
-		addr.IP, ok = getIPv4(hostResponse.Answers, host)
+		addr.IP, ok = getIPv4(hostResponse.Records.Answers, host)
 		if !ok {
 			return types.Packet{}, ErrUnableToResolve
 		}
@@ -175,5 +189,22 @@ func constructQuery(domain string) types.Packet {
 				Class:  types.QuestionClassIN,
 			},
 		},
+	}
+}
+
+func constructResponse(query types.Packet, packetRecords types.PacketRecords) types.Packet {
+	return types.Packet{
+		Header: types.Header{
+			ID:                           query.Header.ID,
+			PacketType:                   types.PacketTypeResponse,
+			RecursionDesired:             query.Header.RecursionDesired,
+			RecursionAvailable:           true,
+			QuestionSectionSize:          query.Header.QuestionSectionSize,
+			AnswerSectionSize:            uint16(len(packetRecords.Answers)),
+			AuthorityRecordsSectionSize:  uint16(len(packetRecords.AuthorityRecords)),
+			AdditionalRecordsSectionSize: uint16(len(packetRecords.AdditionalRecords)),
+		},
+		Questions: query.Questions,
+		Records:   packetRecords,
 	}
 }

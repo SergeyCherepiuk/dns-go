@@ -4,12 +4,20 @@ import "fmt"
 
 const MaxPacketSize = 512
 
-type Packet struct {
-	Header            Header
-	Questions         []Question
+type PacketRecords struct {
 	Answers           []Record
 	AuthorityRecords  []Record
 	AdditionalRecords []Record
+}
+
+func (r *PacketRecords) Len() int {
+	return len(r.Answers) + len(r.AuthorityRecords) + len(r.AdditionalRecords)
+}
+
+type Packet struct {
+	Header    Header
+	Questions []Question
+	Records   PacketRecords
 }
 
 func (p Packet) String() string {
@@ -30,17 +38,17 @@ func (p Packet) String() string {
 		bytes = append(bytes, '\n')
 	}
 
-	for _, answer := range p.Answers {
+	for _, answer := range p.Records.Answers {
 		bytes = append(bytes, answer.String()...)
 		bytes = append(bytes, '\n')
 	}
 
-	for _, authorityRecord := range p.AuthorityRecords {
+	for _, authorityRecord := range p.Records.AuthorityRecords {
 		bytes = append(bytes, authorityRecord.String()...)
 		bytes = append(bytes, '\n')
 	}
 
-	for _, additionalRecord := range p.AdditionalRecords {
+	for _, additionalRecord := range p.Records.AdditionalRecords {
 		bytes = append(bytes, additionalRecord.String()...)
 		bytes = append(bytes, '\n')
 	}

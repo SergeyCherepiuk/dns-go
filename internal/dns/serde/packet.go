@@ -19,21 +19,21 @@ func MarshalPacket(packet types.Packet) ([]byte, error) {
 		}
 	}
 
-	for _, answer := range packet.Answers {
+	for _, answer := range packet.Records.Answers {
 		err := marshalRecord(writer, answer)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	for _, authorityRecord := range packet.AuthorityRecords {
+	for _, authorityRecord := range packet.Records.AuthorityRecords {
 		err := marshalRecord(writer, authorityRecord)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	for _, additionalRecord := range packet.AdditionalRecords {
+	for _, additionalRecord := range packet.Records.AdditionalRecords {
 		err := marshalRecord(writer, additionalRecord)
 		if err != nil {
 			return nil, err
@@ -71,7 +71,7 @@ func UnmarshalPacket(bytes []byte) (types.Packet, error) {
 			return types.Packet{}, err
 		}
 
-		packet.Answers = append(packet.Answers, answer)
+		packet.Records.Answers = append(packet.Records.Answers, answer)
 	}
 
 	for range packet.Header.AuthorityRecordsSectionSize {
@@ -80,7 +80,7 @@ func UnmarshalPacket(bytes []byte) (types.Packet, error) {
 			return types.Packet{}, err
 		}
 
-		packet.AuthorityRecords = append(packet.AuthorityRecords, authorityRecord)
+		packet.Records.AuthorityRecords = append(packet.Records.AuthorityRecords, authorityRecord)
 	}
 
 	for range packet.Header.AdditionalRecordsSectionSize {
@@ -89,7 +89,7 @@ func UnmarshalPacket(bytes []byte) (types.Packet, error) {
 			return types.Packet{}, err
 		}
 
-		packet.AdditionalRecords = append(packet.AdditionalRecords, additionalRecord)
+		packet.Records.AdditionalRecords = append(packet.Records.AdditionalRecords, additionalRecord)
 	}
 
 	return packet, nil
